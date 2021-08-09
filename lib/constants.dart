@@ -17,3 +17,4 @@ String kCreateTableQuery = '''
 TextStyle kItemWidgetTextStyle = TextStyle(fontSize: 12);
 String kDatabaseEmptyText = "Database is Empty, Click on + to import PDF files";
 String kGivePermissionText = "Give Permission To Access Files";
+String kFileNotFoundImage = "assets/images/no_file_found.png";

@@ -14,8 +14,14 @@ class Item extends StatelessWidget {
   // const Item({ Key? key }) : super(key: key);
   Item({required this.path});
   final path;
+  bool fileExist = true;
+  void isFileExist() async {
+    fileExist = await Utils.isFileExistInDir(path);
+  }
+
   @override
   Widget build(BuildContext context) {
+    isFileExist();
     double itemImageSize = (MediaQuery.of(context).size.width) / 2 - 25;
     return Card(
       child: Container(
@@ -35,16 +41,16 @@ class Item extends StatelessWidget {
                 OpenFile.open(path);
               },
               child: Thumbnail(
-                key: Key(path),
-                mimeType: 'application/pdf',
+                key: fileExist ? Key(path) : Key(kFileNotFoundImage),
+                mimeType: fileExist ? 'application/pdf' : 'image/png',
                 widgetSize: itemImageSize - 25,
                 dataResolver: () async {
                   //Check if file exists
-                  if (await Utils.isFileExistInDir(path)) {
+                  if (fileExist) {
                     return File(path).readAsBytesSync();
                   } else {
                     //Return "No File Found by Andreas Wikström from the Noun Project" if File doesnot exist
-                    return (await rootBundle.load('assets/no_file_found.png'))
+                    return (await rootBundle.load(kFileNotFoundImage))
                         .buffer
                         .asUint8List();
                   }
@@ -56,10 +62,10 @@ class Item extends StatelessWidget {
                 TextButton(
                   onPressed: () {
                     print("Edit Pressed");
-                                    DBHelper dbH = DBHelper();
-                dbH.deleteFromPath(path);
-                Utils.deleteFromDir(path);
-                context.read<PdfItemModel>().deleteItems(path);
+                    DBHelper dbH = DBHelper();
+                    dbH.deleteFromPath(path);
+                    Utils.deleteFromDir(path);
+                    context.read<PDFItemModel>().deleteItems(path);
                   },
                   child: Text("Menu"),
                 ),

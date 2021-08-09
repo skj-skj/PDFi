@@ -5,7 +5,7 @@ import 'package:pdf_indexing/widgets/item.dart';
 
 import 'package:pdf_indexing/functions/db_helper.dart';
 
-class PdfItemModel extends ChangeNotifier {
+class PDFItemModel extends ChangeNotifier {
   List<Item> _items = [];
 
   List<Item> get items {
@@ -44,15 +44,13 @@ class PdfItemModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  void deleteItems(String path){
-    
+  void deleteItems(String path) {
     _items = _items.where((item) => item.path != path).toList();
-    
 
     notifyListeners();
   }
 
-  void notify() {
-    notifyListeners();
-  }
+  // void notify() {
+  //   notifyListeners();
+  // }
 }

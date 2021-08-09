@@ -24,7 +24,7 @@ class SearchWidget extends StatelessWidget {
           // );
           List<Map> dbResultItems =
               await dbHelper.queryForFilePathsWithCondition(text);
-          context.read<PdfItemModel>().updateItem(dbResultItems);
+          context.read<PDFItemModel>().updateItem(dbResultItems);
           // db.close();
         },
         decoration: InputDecoration(

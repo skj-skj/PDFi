@@ -42,7 +42,7 @@ void initialPDFItem({required BuildContext context}) async {
     print(e);
   }
 
-  context.read<PdfItemModel>().updateItem(dbResultItems);
+  context.read<PDFItemModel>().updateItem(dbResultItems);
 
   // db.close();
 }

@@ -19,7 +19,8 @@ Future<List<File>?> pickPDFFiles() async {
   }
 }
 
-Future<PDFModel> getPdfModelOfFile(File pdfFile,List<String> filenamesInDir) async {
+Future<PDFModel> getPdfModelOfFile(
+    File pdfFile, List<String> filenamesInDir) async {
   String storagePath = await Utils.getStoragePath();
   List<String> filename = Utils.getFileNameAndExtentionFromPath(pdfFile.path);
   String filenameToUse = '';
@@ -27,24 +28,23 @@ Future<PDFModel> getPdfModelOfFile(File pdfFile,List<String> filenamesInDir) asy
   //Generate filename if same filename already exists
   int count = 0;
   String tempFileName = '${filename[0]}.${filename[1]}';
-  while(true){ 
-    if(!filenamesInDir.contains(tempFileName)){
+  while (true) {
+    if (!filenamesInDir.contains(tempFileName)) {
       filenameToUse = tempFileName;
       print("File New Name 2: $filename");
 
       break;
-    }else{
+    } else {
       print("File Name Exists: $filename");
       count++;
       tempFileName = '${filename[0]}-$count.${filename[1]}';
       print("File New Name: $tempFileName");
-
     }
   }
   print("File New Name 3: $filename");
-  
-  File pdfSavedFile = await pdfFile.copy(join(
-      storagePath, kPdfFilesPath, filenameToUse));
+
+  File pdfSavedFile =
+      await pdfFile.copy(join(storagePath, kPdfFilesPath, filenameToUse));
 
   // Extracting Text from pdf
   PDFDoc doc = await PDFDoc.fromFile(pdfSavedFile);

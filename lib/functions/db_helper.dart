@@ -54,27 +54,27 @@ class DBHelper {
   // Select query for getting sha1 hash entry of the file
   Future<String> getSHA1HashDB({required String hash}) async {
     Database? dbClient = await db;
-    List<Map> results = await dbClient!.query(kPdfTableName,
-        columns: ['hash'],
-        where: "hash = '$hash'");
+    List<Map> results = await dbClient!
+        .query(kPdfTableName, columns: ['hash'], where: "hash = '$hash'");
     print(results);
-    if(results.length > 0){
+    if (results.length > 0) {
       return results[0]['hash'];
-    }else{
+    } else {
       return '';
     }
-    
   }
 
   void deleteFromPath(String path) async {
     Database? dbClient = await db;
-    int rowsDeleted = await dbClient!.delete(kPdfTableName,where: "path = ?",whereArgs: [path]);
+    int rowsDeleted = await dbClient!
+        .delete(kPdfTableName, where: "path = ?", whereArgs: [path]);
     print("$rowsDeleted Rows Deleted");
   }
 
   void deleteFromFilename(String filename) async {
     Database? dbClient = await db;
-    int rowsDeleted = await dbClient!.delete(kPdfTableName,where: "filename = ?",whereArgs: [filename]);
+    int rowsDeleted = await dbClient!
+        .delete(kPdfTableName, where: "filename = ?", whereArgs: [filename]);
     print("$rowsDeleted Rows Deleted");
   }
 }

@@ -8,11 +8,11 @@ import 'package:pdf_indexing/functions/pdfUtils.dart' as PdfUtils;
 import 'package:pdf_indexing/pdfItemModel.dart';
 import 'package:pdf_indexing/pdfModel.dart';
 import 'package:pdf_indexing/widgets/search_widget.dart';
-import 'package:pdf_text/pdf_text.dart';
+// import 'package:pdf_text/pdf_text.dart';
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 // import 'package:sqflite/sqflite.dart';
 import 'constants.dart';
-import 'package:path/path.dart';
+// import 'package:path/path.dart';
 import 'package:provider/provider.dart';
 // import 'functions/initialize_db.dart';
 import 'package:pdf_indexing/functions/request_permission.dart' as reqP;
@@ -21,56 +21,10 @@ import 'package:pdf_indexing/functions/request_permission.dart' as reqP;
 void main() {
   runApp(
     ChangeNotifierProvider(
-      create: (context) => PdfItemModel(),
+      create: (context) => PDFItemModel(),
       child: Home(),
     ),
   );
-}
-
-void receiveSharingIntent() async {
-  DBHelper dbHelper = DBHelper();
-  //List of Files Shared
-  List<SharedMediaFile> sharedFiles = [];
-  // When App is Closed
-  sharedFiles += await ReceiveSharingIntent.getInitialMedia();
-  // When App is in Memory
-  ReceiveSharingIntent.getMediaStream().listen((List<SharedMediaFile> files) {
-    sharedFiles += files;
-  });
-
-  // Database Open
-  String storagePath = await Utils.getStoragePath();
-  // Database db = await openDatabase(
-  //   join(storagePath, kDBFileName),
-  //   version: 1,
-  // );
-
-  // Copying File to Storage and then indexing to db
-  for (SharedMediaFile sharedFile in sharedFiles) {
-    // Extract the file name
-    String filename = Utils.getFileNameFromPath(sharedFile.path);
-    // Saving File to Storage
-    File pdfSavedFile = await File(sharedFile.path)
-        .copy(join(storagePath, kPdfFilesPath, filename));
-
-    //Extracting Text from the pdf
-    PDFDoc doc = await PDFDoc.fromFile(pdfSavedFile);
-    PDFPage page = doc.pageAt(1);
-    String pageText = await page.text;
-
-    // Generating SHA1 Hash
-    String hash = await Utils.getSHA1Hash(pdfSavedFile);
-
-    // Creating pdfModel Object containg path,pageText and keywords
-    PDFModel pdfModel = PDFModel(
-        path: pdfSavedFile.path, pdfText: pageText, keywords: '', hash: hash);
-
-    //Save to Database
-    // db.insert(kPdfTableName, pdfModel.toMap());
-    dbHelper.savePdf(pdfModel);
-  }
-  //Cloase Database
-  // db.close();
 }
 
 class Home extends StatefulWidget {
@@ -103,9 +57,103 @@ class _HomeState extends State<Home> {
       setState(() {
         dbIsEmpty = false;
       });
-    print("After $dbIsEmpty");
-    
+      print("After $dbIsEmpty");
     }
+  }
+
+  // void updateItemList({required BuildContext context}) async {
+  //   context
+  //       .read<PdfItemModel>()
+  //       .updateItemFromList(await Utils.getFilePathListFromDB());
+  // }
+
+  void receiveSharingIntent() async {
+    print("reverse Share start");
+    DBHelper dbHelper = DBHelper();
+    List<SharedMediaFile> sharedFiles = [];
+    int countNewFiles = 0, countExistFiles = 0, countNotPdfFiles = 0;
+    //List of Files Shared
+    // List<SharedMediaFile> sharedFiles = [];
+    // When App is Closed
+    sharedFiles += await ReceiveSharingIntent.getInitialMedia();
+    // When App is in Memory
+    ReceiveSharingIntent.getMediaStream().listen((List<SharedMediaFile> files) {
+      sharedFiles += files;
+    });
+
+    print("reverse Share mid");
+
+    // Database Open
+    // String storagePath = await Utils.getStoragePath();
+    // Database db = await openDatabase(
+    //   join(storagePath, kDBFileName),
+    //   version: 1,
+    // );
+    List<String> pdfFileNameAlreadyInDir =
+        (await Utils.getFilePathListFromDir())
+            .map((path) => Utils.getFileNameFromPath(path))
+            .toList();
+    // Copying File to Storage and then indexing to db
+    if (sharedFiles.length > 0) {
+      showSnackBar(
+          context, "Files Importing Files, Please Wait", _messangerKey);
+    }
+
+    for (SharedMediaFile sharedFile in sharedFiles) {
+      print("Reverse Shared File: ${sharedFile.path}");
+      File pdfFile = File(sharedFile.path);
+      //Checking the file is pdf or not
+      if (Utils.isPDF(pdfFile.path)) {
+        countNotPdfFiles++;
+        continue;
+      }
+      //Checking is the file already exists in the database
+      if (await Utils.isHashExists(pdfFile)) {
+        print("Already Exists");
+        countExistFiles++;
+
+        continue;
+      } else {
+        PDFModel pdfModel =
+            await PdfUtils.getPdfModelOfFile(pdfFile, pdfFileNameAlreadyInDir);
+        try {
+          dbHelper.savePdf(pdfModel);
+          countNewFiles++;
+        } catch (e) {
+          print(e);
+          print("looks like pdf is already stored in the DB");
+          continue;
+        }
+
+        print(pdfModel.toString());
+      }
+    }
+
+    context
+        .read<PDFItemModel>()
+        .updateItemFromList(await Utils.getFilePathListFromDB());
+    if (sharedFiles.length > 0) {
+      String text = Utils.getFileOrFilesText(
+          countNewFiles); // No File , 1 File, 2 Files, 3 Files etc.
+      showSnackBar(context, "$text Imported Successfully", _messangerKey);
+    }
+    if (countExistFiles > 0) {
+      String text = Utils.getFileOrFilesText(
+          countExistFiles); // No File , 1 File, 2 Files, 3 Files etc.
+      showSnackBar(context, "$text already in the database", _messangerKey);
+    }
+    if (countNotPdfFiles > 0) {
+      String text = Utils.getFileOrFilesText(
+          countNotPdfFiles); // No File , 1 File, 2 Files, 3 Files etc.
+      showSnackBar(context, "$text are not PDF", _messangerKey);
+    }
+
+    print("reverse Share end");
+  }
+
+  void showSnackBar(BuildContext context, String text,
+      GlobalKey<ScaffoldMessengerState> key) {
+    key.currentState!.showSnackBar(SnackBar(content: Text(text)));
   }
 
   @override
@@ -116,17 +164,13 @@ class _HomeState extends State<Home> {
     // setFilePathsFromDB();
     setstoragePermissionStatus();
     setDBIsEmpty();
-  }
-
-  void showSnackBar(BuildContext context, String text,
-      GlobalKey<ScaffoldMessengerState> key) {
-    key.currentState!.showSnackBar(SnackBar(content: Text(text)));
+    receiveSharingIntent();
   }
 
   @override
   Widget build(BuildContext context) {
     // initialPDFItem(context: context);
-    receiveSharingIntent();
+    // updateItemList(context: context);
     return MaterialApp(
       //For SnackBar
       scaffoldMessengerKey: _messangerKey,
@@ -134,18 +178,27 @@ class _HomeState extends State<Home> {
         child: Scaffold(
           appBar: AppBar(
             title: Text("PDF Indexing"),
+            actions: [
+              IconButton(
+                  onPressed: () async {
+                    context.read<PDFItemModel>().updateItemFromList(
+                        await Utils.getFilePathListFromDB());
+                  },
+                  icon: Icon(Icons.refresh))
+            ],
           ),
           body: SingleChildScrollView(
             child: Column(
               children: [
+                // Text(sharedFiles.toString()),
                 SearchWidget(),
                 (storagePermissionStatus)
                     ? (!dbIsEmpty)
-                        ? Consumer<PdfItemModel>(
+                        ? Consumer<PDFItemModel>(
                             builder: (context, pdfItem, child) {
                               // context.read<PdfItemModel>().updateItemFromList(filePathsFromDB);
                               return Wrap(
-                                  children: context.read<PdfItemModel>().items);
+                                  children: context.read<PDFItemModel>().items);
                             },
                           )
                         : Center(
@@ -168,7 +221,7 @@ class _HomeState extends State<Home> {
           ),
           floatingActionButton: FloatingActionButton(
             onPressed: () async {
-              String snackBarMsg;
+              // String snackBarMsg;
               if (storagePermissionStatus) {
                 print("Import Pressed");
 
@@ -178,54 +231,72 @@ class _HomeState extends State<Home> {
                         .toList();
 
                 DBHelper dbHelper = DBHelper();
-                int countFiles = 0;
-                int alreadyExistsFiles = 0;
-                String alreadyExistsText = "";
-                int totalPDFFiles = 0;
+                int countNewFiles = 0, countExistFiles = 0;
+
+                // int countFiles = 0;
+                // int alreadyExistsFiles = 0;
+                // String alreadyExistsText = "";
+                // int totalPDFFiles = 0;
 
                 List<File>? pdfFiles = await PdfUtils.pickPDFFiles();
+
                 if (pdfFiles != null) {
-                  totalPDFFiles = pdfFiles.length;
+                  showSnackBar(context, "Files Importing Files, Please Wait",
+                      _messangerKey);
+
+                  // totalPDFFiles = pdfFiles.length;
                   for (File pdfFile in pdfFiles) {
                     // Checking if the file exists or not
-                    if(await Utils.isHashExists(pdfFile)){
+                    if (await Utils.isHashExists(pdfFile)) {
                       print("Already Exists");
-                      alreadyExistsFiles += 1;
-                      alreadyExistsText = ", File Already Exist";
+                      countExistFiles++;
                       continue;
-                    }else{
-                      PDFModel pdfModel =
-                          await PdfUtils.getPdfModelOfFile(pdfFile,pdfFileNameAlreadyInDir);
+                    } else {
+                      PDFModel pdfModel = await PdfUtils.getPdfModelOfFile(
+                          pdfFile, pdfFileNameAlreadyInDir);
                       dbHelper.savePdf(pdfModel);
                       print(pdfModel.toString());
-                      countFiles += 1;
+                      // countFiles += 1;
+                      countNewFiles++;
                     }
-                    
-                     
                   }
                 }
 
                 //alreadyExistsText: if some file are already exists
-                if (alreadyExistsFiles != totalPDFFiles) {
-                  alreadyExistsText = ", Some Files Already Exists";
-                }
+                // if (alreadyExistsFiles != totalPDFFiles) {
+                //   alreadyExistsText = ", Some Files Already Exists";
+                // }
                 context
-                    .read<PdfItemModel>()
+                    .read<PDFItemModel>()
                     .updateItemFromList(await Utils.getFilePathListFromDB());
-
-                if (countFiles > 0 && dbIsEmpty) {
-                  setState(() {
-                    dbIsEmpty = false;
-                  });
+                // File Imported Successfully
+                if (countNewFiles > 0) {
+                  // File Importd When Database is empty
+                  if (dbIsEmpty) {
+                    setState(() {
+                      dbIsEmpty = false;
+                    });
+                  }
+                  String text = Utils.getFileOrFilesText(countNewFiles);
+                  showSnackBar(
+                      context, "$text Imported Successfully", _messangerKey);
                 }
-                snackBarMsg =
-                    "${Utils.getFileOrFilesText(countFiles)} Imported $alreadyExistsText";
+                // Files already exists in the database
+                if (countExistFiles > 0) {
+                  String text = Utils.getFileOrFilesText(countExistFiles);
+                  showSnackBar(
+                      context, "$text already in the database", _messangerKey);
+                }
+
+                // snackBarMsg =
+                //     "${Utils.getFileOrFilesText(countFiles)} Imported $alreadyExistsText";
               } else {
-                snackBarMsg = "Please Give Storage Access Permission";
+                String text = "Please Give Storage Access Permission";
+                showSnackBar(context, "$text", _messangerKey);
               }
               FilePicker.platform.clearTemporaryFiles();
               // Fluttertoast.showToast(msg: snackBarMsg);
-              showSnackBar(context, snackBarMsg, _messangerKey);
+              // showSnackBar(context, snackBarMsg, _messangerKey);
             },
             child: Icon(Icons.add),
           ),

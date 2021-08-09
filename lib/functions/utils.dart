@@ -20,9 +20,11 @@ List<String> getFileNameAndExtentionFromPath(String path) {
   String filename = getFileNameFromPath(path);
   List<String> filenameSplit = filename.split('.');
   int filenameSplitLength = filenameSplit.length;
-  String filenameOnly = filenameSplit.sublist(0,filenameSplitLength-1).reduce((acc, curr) => acc+curr);
+  String filenameOnly = filenameSplit
+      .sublist(0, filenameSplitLength - 1)
+      .reduce((acc, curr) => acc + curr);
   String filenameExtension = filenameSplit.last;
-  return [filenameOnly,filenameExtension];
+  return [filenameOnly, filenameExtension];
 }
 
 String getFileOrFilesText(int num) {
@@ -81,7 +83,6 @@ Future<List<String>> getFilePathListFromDB() async {
 
 // Bool - return status of DB, is it empty or not
 
-
 //Bool - if File Name exist in the directory
 Future<bool> isFileExistInDir(String filePath) async {
   List<String> files = await getFilePathListFromDir();
@@ -120,7 +121,7 @@ Future<bool> isHashExists(File file) async {
 // }
 
 // Delete file from the folder / directory
-void deleteFromDir(String path){
+void deleteFromDir(String path) {
   File file = File(path);
   file.deleteSync();
   print("Deleted");
