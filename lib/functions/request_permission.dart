@@ -1,5 +1,11 @@
 import 'package:permission_handler/permission_handler.dart';
 
+Future<bool> getStoragePermissionStatus() async {
+  PermissionStatus storagePermissionStatus = await Permission.storage.status;
+  return storagePermissionStatus.isGranted;
+}
+
+// not in use currently
 Future<void> requestPermission() async {
   PermissionStatus storageStatus = await Permission.storage.status;
   if (storageStatus.isDenied) {
@@ -8,11 +14,6 @@ Future<void> requestPermission() async {
   } else {
     print('Already Granted');
   }
-}
-
-Future<bool> getStoragePermissionStatus() async {
-  PermissionStatus storagePermissionStatus = await Permission.storage.status;
-  return storagePermissionStatus.isGranted;
 }
 
 Future<bool> requestStoragePermission() async {

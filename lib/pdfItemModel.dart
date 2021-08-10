@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
-// import 'package:flutter/cupertino.dart';
-
-import 'package:pdf_indexing/widgets/item.dart';
-
 import 'package:pdf_indexing/functions/db_helper.dart';
+import 'package:pdf_indexing/widgets/item.dart';
 
 class PDFItemModel extends ChangeNotifier {
   List<Item> _items = [];
@@ -17,6 +14,12 @@ class PDFItemModel extends ChangeNotifier {
     }
   }
 
+  void deleteItems(String path) {
+    _items = _items.where((item) => item.path != path).toList();
+
+    notifyListeners();
+  }
+
   Future<void> fetchItems() async {
     DBHelper dbHelper = DBHelper();
     List<Item> tempItems = [];
@@ -28,6 +31,7 @@ class PDFItemModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  //Update Item from List<String> containing list of file paths
   void updateItem(List<Map> dbResultItems) {
     _items = [];
     for (Map dbResultItem in dbResultItems) {
@@ -36,17 +40,10 @@ class PDFItemModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  //Update Item from List<String> containing list of file paths
   void updateItemFromList(List<String> filePaths) {
     _items = [];
     // Mapped filepath to Item(path: filePath) wiget and stored it into items list
     _items.addAll((filePaths.map((filePath) => Item(path: filePath))));
-    notifyListeners();
-  }
-
-  void deleteItems(String path) {
-    _items = _items.where((item) => item.path != path).toList();
-
     notifyListeners();
   }
 

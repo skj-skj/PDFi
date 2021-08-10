@@ -1,23 +1,11 @@
 import 'dart:io';
+
 import 'package:file_picker/file_picker.dart';
 import 'package:path/path.dart';
 import 'package:pdf_indexing/constants.dart';
 import 'package:pdf_indexing/functions/utils.dart' as Utils;
 import 'package:pdf_indexing/pdfModel.dart';
 import 'package:pdf_text/pdf_text.dart';
-
-Future<List<File>?> pickPDFFiles() async {
-  FilePickerResult? result = await FilePicker.platform.pickFiles(
-    type: FileType.custom,
-    allowedExtensions: ['pdf'],
-    allowMultiple: true,
-  );
-  if (result != null) {
-    return result.paths.map((path) => File(path!)).toList();
-  } else {
-    return null;
-  }
-}
 
 Future<PDFModel> getPdfModelOfFile(
     File pdfFile, List<String> filenamesInDir) async {
@@ -55,6 +43,23 @@ Future<PDFModel> getPdfModelOfFile(
   String hash = await Utils.getSHA1Hash(pdfSavedFile);
 
   PDFModel pdfModel = PDFModel(
-      path: pdfSavedFile.path, pdfText: pageText, keywords: '', hash: hash);
+      path: pdfSavedFile.path,
+      pdfText: pageText,
+      tags: '',
+      hash: hash,
+      folder: '');
   return pdfModel;
+}
+
+Future<List<File>?> pickPDFFiles() async {
+  FilePickerResult? result = await FilePicker.platform.pickFiles(
+    type: FileType.custom,
+    allowedExtensions: ['pdf'],
+    allowMultiple: true,
+  );
+  if (result != null) {
+    return result.paths.map((path) => File(path!)).toList();
+  } else {
+    return null;
+  }
 }

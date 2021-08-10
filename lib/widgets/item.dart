@@ -1,32 +1,28 @@
 import 'dart:io';
-import 'package:flutter/services.dart';
-import 'package:pdf_indexing/constants.dart';
-import 'package:pdf_indexing/functions/db_helper.dart';
-import 'package:pdf_indexing/functions/utils.dart' as Utils;
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:open_file/open_file.dart';
-import 'package:pdf_indexing/pdfItemModel.dart';
+import 'package:pdf_indexing/constants.dart';
+import 'package:pdf_indexing/functions/utils.dart' as Utils;
+import 'package:pdf_indexing/widgets/popup_menu.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:thumbnailer/thumbnailer.dart';
-import 'package:provider/provider.dart';
 
+// ignore: must_be_immutable
 class Item extends StatelessWidget {
-  // const Item({ Key? key }) : super(key: key);
-  Item({required this.path});
   final path;
   bool fileExist = true;
-  void isFileExist() async {
-    fileExist = await Utils.isFileExistInDir(path);
-  }
-
+  Item({required this.path});
   @override
   Widget build(BuildContext context) {
     isFileExist();
-    double itemImageSize = (MediaQuery.of(context).size.width) / 2 - 25;
+    double screenWidth = MediaQuery.of(context).size.width;
+    double itemImageSize = screenWidth / 2.25;
     return Card(
       child: Container(
         width: itemImageSize,
-        height: itemImageSize + 60,
+        // height: itemImageSize + 60,
         child: Column(
           children: [
             Text(
@@ -35,8 +31,6 @@ class Item extends StatelessWidget {
             ),
             InkWell(
               onTap: () {
-                // DBHelper dbH = DBHelper();
-                // dbH.deleteFromFilename('Ziva New MRPspdf');
                 print("Image Pressed");
                 OpenFile.open(path);
               },
@@ -58,29 +52,27 @@ class Item extends StatelessWidget {
               ),
             ),
             Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                TextButton(
-                  onPressed: () {
-                    print("Edit Pressed");
-                    DBHelper dbH = DBHelper();
-                    dbH.deleteFromPath(path);
-                    Utils.deleteFromDir(path);
-                    context.read<PDFItemModel>().deleteItems(path);
-                  },
-                  child: Text("Menu"),
-                ),
-                TextButton(
+                //Menu Button
+                popupMenu(context: context, path: path),
+                //Share Button
+                IconButton(
                   onPressed: () {
                     print("Share Pressed");
                     Share.shareFiles([path]);
                   },
-                  child: Text("Share"),
-                ),
+                  icon: Icon(Icons.share),
+                )
               ],
             ),
           ],
         ),
       ),
     );
+  }
+
+  void isFileExist() async {
+    fileExist = await Utils.isFileExistInDir(path);
   }
 }
