@@ -1,11 +1,16 @@
+// 🎯 Dart imports:
 import 'dart:io';
 
+// 📦 Package imports:
 import 'package:crypto/crypto.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
+
+// 🌎 Project imports:
 import 'package:pdf_indexing/constants.dart';
 import 'package:pdf_indexing/functions/db_helper.dart';
 
+/// ➕ Create 'pdf_files' Folder if not exist
 void createFolderIfNotExist() async {
   String storagePath = await getStoragePath();
   Directory pdfFilesDir = Directory(join(storagePath, kPdfFilesPath));
@@ -14,6 +19,16 @@ void createFolderIfNotExist() async {
   }
 }
 
+/// 🗑️ Delete Cache Files
+void deleteCache() async {
+  final cacheDir = await getTemporaryDirectory();
+
+  if (cacheDir.existsSync()) {
+    cacheDir.deleteSync(recursive: true);
+  }
+}
+
+/// 🗑️ Delete Specific File according to [path] from 'pdf_files' 📁 Directory
 void deleteFromDir(String path) {
   try {
     File file = File(path);
@@ -25,6 +40,7 @@ void deleteFromDir(String path) {
   }
 }
 
+/// 🗃️ Return List of [Filename,Extension] used when Filename already exist in App Directory
 List<String> getFileNameAndExtentionFromPath(String path) {
   String filename = getFileNameFromPath(path);
   List<String> filenameSplit = filename.split('.');
@@ -36,11 +52,12 @@ List<String> getFileNameAndExtentionFromPath(String path) {
   return [filenameOnly, filenameExtension];
 }
 
+/// 📄 return Filename from [path]
 String getFileNameFromPath(String path) {
   return path.split('/').last;
 }
 
-//Where Condition for Searching
+/// 🔤 Return String Containing Singular or Plural of File according to [num]
 String getFileOrFilesText(int num) {
   String text;
   if (num == 0) {
@@ -54,7 +71,7 @@ String getFileOrFilesText(int num) {
   return "$num $text";
 }
 
-// Is the file is pdf or the name have .pdf extension
+/// ⏩ [🔡] Return Future [String,] containg path of files from 🗄️ Database
 Future<List<String>> getFilePathListFromDB() async {
   DBHelper dbHelper = DBHelper();
   List<Map> dbResult = await dbHelper.queryForAllfilePaths();
@@ -68,7 +85,7 @@ Future<List<String>> getFilePathListFromDB() async {
   return filePaths;
 }
 
-// Get list of file path from the "pdf_files" folder/directory
+/// ⏩ [🔡] Return Future [String,] containg path of files from 📁 Directory
 Future<List<String>> getFilePathListFromDir() async {
   String storagePath = await getStoragePath();
   Directory pdfFilesDir = Directory(join(storagePath, kPdfFilesPath));
@@ -81,32 +98,31 @@ Future<List<String>> getFilePathListFromDir() async {
   return filePaths;
 }
 
-// Get list of file path from the Database
+/// #️⃣ Return [SHA1] hash of [file]
 Future<String> getSHA1Hash(File file) async {
   String hash = (await sha1.bind(file.openRead()).first).toString();
   print(hash);
   return hash;
 }
 
-// Bool - return status of DB, is it empty or not
-
-//Bool - if File Name exist in the directory
+/// 📂 Returns External Storage Directory
 Future<String> getStoragePath() async {
   Directory? storageDirectory = await getExternalStorageDirectory();
   return storageDirectory!.path;
 }
 
+/// 🔠 Returns String, containig ⚙️ Generated SQLite Where Condition
 String getWhereConditionForSearch(String text) {
   return "pdfText LIKE '%$text%' OR filename LIKE '%$text%' OR tags LIKE '%$text%'";
 }
 
-// String - Get sha1 hash
+/// 0️⃣/1️⃣ Returns bool, of is [filePath] exist in 📁 Directory or not
 Future<bool> isFileExistInDir(String filePath) async {
   List<String> files = await getFilePathListFromDir();
   return files.contains(filePath);
 }
 
-//Bool - Is File hash exists in the DB
+/// 0️⃣/1️⃣ Returns bool, of is #️⃣ exists in the 🗄️ Database or not
 Future<bool> isHashExists(File file) async {
   String hash = await getSHA1Hash(file);
 
@@ -118,7 +134,7 @@ Future<bool> isHashExists(File file) async {
   return (hash == hashFromDB);
 }
 
-// Delete file from the folder / directory
+/// 0️⃣/1️⃣ Returns bool, is [path] have pdf extension or not
 bool isPDF(String path) {
   if (path.split('.').last.toLowerCase() == "pdf") {
     return true;

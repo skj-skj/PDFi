@@ -1,8 +1,17 @@
+// 🐦 Flutter imports:
 import 'package:flutter/material.dart';
-import 'package:pdf_indexing/functions/db_helper.dart';
-import 'package:pdf_indexing/pdfItemModel.dart';
+
+// 📦 Package imports:
 import 'package:provider/provider.dart';
 
+// 🌎 Project imports:
+import 'package:pdf_indexing/functions/db_helper.dart';
+import 'package:pdf_indexing/model/pdfItemModel.dart';
+
+/// 💄 Search Widget
+///
+/// It is TextField Widget
+///   * onChange 🌀 Update the [item] of pdfItemModel 🧰
 class SearchWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -10,7 +19,6 @@ class SearchWidget extends StatelessWidget {
       padding: const EdgeInsets.all(18.0),
       child: TextField(
         onChanged: (text) async {
-          print(text);
           DBHelper dbHelper = DBHelper();
 
           List<Map> dbResultItems =

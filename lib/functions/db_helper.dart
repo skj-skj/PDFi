@@ -1,12 +1,18 @@
+// 📦 Package imports:
 import 'package:path/path.dart';
-import 'package:pdf_indexing/constants.dart';
-import 'package:pdf_indexing/functions/utils.dart' as Utils;
-import 'package:pdf_indexing/pdfModel.dart';
 import 'package:sqflite/sqflite.dart';
 
+// 🌎 Project imports:
+import 'package:pdf_indexing/constants.dart';
+import 'package:pdf_indexing/functions/utils.dart' as Utils;
+import 'package:pdf_indexing/model/pdfModel.dart';
+
+/// 🗄️🛠️ Database Helper Class
 class DBHelper {
+  /// 🗄️ [Database?] 🗿 🕵️ variable
   static Database? _db;
 
+  /// 🗞️ getter for [_db], which initiate Database if null
   Future<Database?> get db async {
     if (_db != null) {
       return _db;
@@ -16,6 +22,7 @@ class DBHelper {
     }
   }
 
+  /// 🗑️ Delete Row by [filename] from 🗄️ Database
   void deleteFromFilename(String filename) async {
     Database? dbClient = await db;
     int rowsDeleted = await dbClient!
@@ -23,6 +30,7 @@ class DBHelper {
     print("$rowsDeleted Rows Deleted");
   }
 
+  /// 🗑️ Delete Row by [path] from 🗄️ Database
   void deleteFromPath(String path) async {
     Database? dbClient = await db;
     int rowsDeleted = await dbClient!
@@ -30,6 +38,9 @@ class DBHelper {
     print("$rowsDeleted Rows Deleted");
   }
 
+  /// ⏩🔠 Return String, containing [folder] data
+  ///
+  /// Where path = [path]
   Future<String> getFolder({required String path}) async {
     Database? dbClient = await db;
     List<Map> results = await dbClient!
@@ -41,6 +52,10 @@ class DBHelper {
     }
   }
 
+  /// ⏩#️⃣ Return String, containing [hash] String
+  ///
+  /// Where hash = [hash]
+  /// if hash doesn't exist return empty String ''
   Future<String> getSHA1HashDB({required String hash}) async {
     Database? dbClient = await db;
     List<Map> results = await dbClient!
@@ -53,6 +68,9 @@ class DBHelper {
     }
   }
 
+  /// ⏩🏷️ Return String, containing [tags] data
+  ///
+  /// Where path = [path]
   Future<String> getTags({required String path}) async {
     Database? dbClient = await db;
     List<Map> results = await dbClient!
@@ -64,7 +82,9 @@ class DBHelper {
     }
   }
 
-  //Select query for all file paths
+  /// ⏩🗄️ Return Database
+  ///
+  /// It open Database in 📁 Directory and Create Table in 🗄️ Database on first run
   Future<Database> initDB() async {
     String storagePath = await Utils.getStoragePath();
     Database db = await openDatabase(join(storagePath, kDBFileName),
@@ -72,14 +92,19 @@ class DBHelper {
     return db;
   }
 
-  //Select query for file paths with where condition - seaching in the text column
+  /// ⏩[🗺️] Return [Map,]
+  ///
+  /// Return [path] from all Rows
   Future<List<Map>> queryForAllfilePaths() async {
     Database? dbClient = await db;
     return await dbClient!
         .query(kPdfTableName, columns: ['path'], orderBy: kPathAsc);
   }
 
-  // Select query for getting sha1 hash entry of the file
+  /// ⏩[🗺️] Return [Map,]
+  ///
+  /// Return [path] from Rows
+  /// Where pdfText,filename,tags contains [text]
   Future<List<Map>> queryForFilePathsWithCondition(String text) async {
     Database? dbClient = await db;
     return await dbClient!.query(
@@ -90,22 +115,26 @@ class DBHelper {
     );
   }
 
+  /// 📥 Save [folder] data in the 🗄️ Database
   void saveFolder({required String path, required String folder}) async {
     Database? dbClient = await db;
     dbClient!
         .update(kPdfTableName, {'folder': '$folder'}, where: "path = '$path'");
   }
 
+  /// 📥 Save [pdfModel] data in the 🗄️ Database
   void savePdf(PDFModel pdfModel) async {
     Database? dbClient = await db;
     dbClient!.insert(kPdfTableName, pdfModel.toMap());
   }
 
+  /// 📥 Save [tags] data in the 🗄️ Database
   void saveTags({required String path, required String tags}) async {
     Database? dbClient = await db;
     dbClient!.update(kPdfTableName, {'tags': '$tags'}, where: "path = '$path'");
   }
 
+  /// ➕ Create 🗄️ Database Table if not Created
   void _onCreate(Database db, int version) async {
     await db.execute(kCreateTableQuery);
   }

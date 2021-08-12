@@ -1,11 +1,64 @@
+// 🐦 Flutter imports:
 import 'package:flutter/material.dart';
-import 'package:pdf_indexing/functions/db_helper.dart';
-import 'package:pdf_indexing/functions/utils.dart' as Utils;
-import 'package:pdf_indexing/pdfItemModel.dart';
+
+// 📦 Package imports:
 import 'package:provider/provider.dart';
 
+// 🌎 Project imports:
+import 'package:pdf_indexing/constants.dart';
+import 'package:pdf_indexing/functions/db_helper.dart';
+import 'package:pdf_indexing/functions/utils.dart' as Utils;
+import 'package:pdf_indexing/model/pdfItemModel.dart';
+
+/// 💄🔘 Cancel Button
+TextButton cancelButton({required BuildContext context}) {
+  return TextButton(
+    onPressed: () {
+      Navigator.pop(context);
+    },
+    child: Text("CANCEL"),
+  );
+}
+
+/// 🗑️ Delete File from 🗄️ Database & 📁 Directory
+void deleteButtonOnYes({
+  required BuildContext context,
+  required String path,
+  required DBHelper dbHelper,
+}) {
+  dbHelper.deleteFromPath(path);
+  Utils.deleteFromDir(path);
+  context.read<PDFItemModel>().deleteItems(path);
+  Navigator.pop(context);
+}
+
+/// 🔠🗞️ Return [tags] data from the [path]
+Future<String> getOldTags({
+  required String path,
+  required DBHelper dbHelper,
+}) async {
+  return await dbHelper.getTags(path: path);
+}
+
+/// 🎛️ Return TextEditingController or null,
+///
+/// According to [oldTags]
+///   * Empty => null
+///   * Some Value => TextEditingController with Initial Value
+getTextController({
+  required String oldTags,
+}) {
+  return (oldTags != '')
+      ? TextEditingController(
+          text: oldTags,
+        )
+      : null;
+}
+
+/// 💄 Popup Context Menu Method
 PopupMenuButton<int> popupMenu(
     {required BuildContext context, required String path}) {
+  /// [💄], List of Menu Item
   List<PopupMenuItem<int>> menu = [
     PopupMenuItem(
       value: 1,
@@ -20,11 +73,11 @@ PopupMenuButton<int> popupMenu(
   return PopupMenuButton(
     itemBuilder: (context) => menu,
     onSelected: (value) async {
+      DBHelper dbH = DBHelper();
+
       if (value == 1) {
-        DBHelper dbH = DBHelper();
-        String oldTags = await dbH.getTags(path: path);
+        String oldTags = await getOldTags(path: path, dbHelper: dbH);
         String tagsText = "";
-        print("clicked Tag");
         showDialog(
             context: context,
             builder: (BuildContext context) {
@@ -33,30 +86,19 @@ PopupMenuButton<int> popupMenu(
                 child: AlertDialog(
                   title: Text("Tags:"),
                   content: TextField(
-                    controller: (oldTags != '')
-                        ? TextEditingController(
-                            text: oldTags,
-                          )
-                        : null,
+                    controller: getTextController(oldTags: oldTags),
                     decoration: InputDecoration(
-                      hintText: "Ex: LED Bulb,Panel,Round",
+                      hintText: kHintText,
                     ),
                     onChanged: (text) {
-                      //  print(keywordText);
                       tagsText = text;
-                      print(tagsText);
                     },
                   ),
                   actions: [
+                    cancelButton(context: context),
                     TextButton(
                       onPressed: () {
-                        Navigator.pop(context);
-                      },
-                      child: Text("CANCEL"),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        print(tagsText);
+                        // 📥 Updating [tags] in 🗄️ Database, Where path = [path]
                         dbH.saveTags(path: path, tags: tagsText);
                         Navigator.pop(context);
                       },
@@ -74,19 +116,11 @@ PopupMenuButton<int> popupMenu(
                 title: Text("Are You Want to Delete?"),
                 content: Text(Utils.getFileNameFromPath(path)),
                 actions: [
+                  cancelButton(context: context),
                   TextButton(
                     onPressed: () {
-                      Navigator.pop(context);
-                    },
-                    child: Text("CANCEL"),
-                  ),
-                  TextButton(
-                    onPressed: () {
-                      DBHelper dbH = DBHelper();
-                      dbH.deleteFromPath(path);
-                      Utils.deleteFromDir(path);
-                      context.read<PDFItemModel>().deleteItems(path);
-                      Navigator.pop(context);
+                      deleteButtonOnYes(
+                          context: context, path: path, dbHelper: dbH);
                     },
                     child: Text("YES"),
                   )

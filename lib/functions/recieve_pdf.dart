@@ -1,62 +1,88 @@
+// 🎯 Dart imports:
 import 'dart:io';
 
+// 🐦 Flutter imports:
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+
+// 📦 Package imports:
+import 'package:provider/provider.dart';
+import 'package:receive_sharing_intent/receive_sharing_intent.dart';
+
+// 🌎 Project imports:
+import 'package:pdf_indexing/constants.dart';
 import 'package:pdf_indexing/functions/db_helper.dart';
 import 'package:pdf_indexing/functions/pdfUtils.dart' as PdfUtils;
 import 'package:pdf_indexing/functions/snackbar.dart';
 import 'package:pdf_indexing/functions/utils.dart' as Utils;
-import 'package:pdf_indexing/pdfItemModel.dart';
-import 'package:pdf_indexing/pdfModel.dart';
-import 'package:provider/provider.dart';
-import 'package:receive_sharing_intent/receive_sharing_intent.dart';
+import 'package:pdf_indexing/model/pdfItemModel.dart';
+import 'package:pdf_indexing/model/pdfModel.dart';
 
 // it recieve pdf from other apps sharing intent
+/// 📲 recieve pdf File
+///
+/// From Other Apps, Like:
+///   - 🗃️ File Manager
+///   - 📺 Social Media
+///   - 🗯️ Messenger
+///   - ☁️ Cloud Storage
+///   - etc.
+///
+/// Requires, BuildContext [context] & [_messengerKey]
 void recievePDF({
   required BuildContext context,
   required GlobalKey<ScaffoldMessengerState> key,
 }) async {
-  print("reverse Share start");
+  // 🗄️ Database Helper
   DBHelper dbHelper = DBHelper();
-  //List of Files Shared
-  List<SharedMediaFile> sharedFiles = [];
-  int countNewFiles = 0, countExistFiles = 0, countNotPdfFiles = 0;
 
-  // When App is Closed
+  //List of Files [📄,] Shared by User
+  List<SharedMediaFile> sharedFiles = [];
+
+  // 📟 [countNewFiles] count new files which are imported
+  // 📟 [countExistFiles] count already existing files in 📁 App Directory
+  // 📟 [countNotPDFfiles] count files which are not pdf
+  int countNewFiles = 0, countExistFiles = 0, countNotPDFfiles = 0;
+
+  // When 📱 App is 📪 Closed
   sharedFiles += await ReceiveSharingIntent.getInitialMedia();
-  // When App is in Memory
+
+  // When 📱 App is 📭 in Memory
   ReceiveSharingIntent.getMediaStream().listen((List<SharedMediaFile> files) {
     sharedFiles += files;
   });
 
-  // print("reverse Share mid");
-
+  // List of Filename in the 📁 App Directory
   List<String> pdfFileNameAlreadyInDir = (await Utils.getFilePathListFromDir())
       .map((path) => Utils.getFileNameFromPath(path))
       .toList();
-  // Copying File to Storage and then indexing to db
+
+  // 🗨️ SnackBar, if sharedFiles != []
   if (sharedFiles.length > 0) {
     showSnackBar(context, "Files Importing, Please Wait", key);
   }
 
   for (SharedMediaFile sharedFile in sharedFiles) {
-    print("Reverse Shared File: ${sharedFile.path}");
+    // 📄 [pdfFile]
     File pdfFile = File(sharedFile.path);
-    //Checking the file is pdf or not
+
+    // 🤔 Checking [pdfFile] have .pdf extension
     if (!Utils.isPDF(pdfFile.path)) {
-      countNotPdfFiles++;
+      countNotPDFfiles++;
       continue;
     }
-    //Checking is the file already exists in the database
+    // 🤔 Checking if the [pdfFile] #️⃣ Already Exist in 🗄️ Database or not
     if (await Utils.isHashExists(pdfFile)) {
       print("Already Exists");
       countExistFiles++;
-
       continue;
     } else {
+      // ⚙️ Generating [pdfModel] for [pdfFile]
       PDFModel pdfModel =
           await PdfUtils.getPdfModelOfFile(pdfFile, pdfFileNameAlreadyInDir);
+      // ⛔ Handing Error
       try {
+        // 📥 Saving [pdfModel] in 🗄️ Database
         dbHelper.savePdf(pdfModel);
         countNewFiles++;
       } catch (e) {
@@ -64,29 +90,31 @@ void recievePDF({
         print("looks like pdf is already stored in the DB");
         continue;
       }
-
-      print(pdfModel.toString());
     }
   }
 
+  // ➕ Updating [item]
   context
       .read<PDFItemModel>()
       .updateItemFromList(await Utils.getFilePathListFromDB());
+
+  // if sharedFiles != [], means user have shared some files
   if (sharedFiles.length > 0) {
+    // 🗨️, Files Imported Successfully SnackBar
     String text = Utils.getFileOrFilesText(
         countNewFiles); // No File , 1 File, 2 Files, 3 Files etc.
-    showSnackBar(context, "$text Imported Successfully", key);
+    showSnackBar(context, "$text $kImportedSuccessfully", key);
   }
   if (countExistFiles > 0) {
+    // 🗨️, Files already in the 🗄️ Database SnackBar
     String text = Utils.getFileOrFilesText(
         countExistFiles); // No File , 1 File, 2 Files, 3 Files etc.
-    showSnackBar(context, "$text already in the database", key);
+    showSnackBar(context, "$text $kAlreadyInDB", key);
   }
-  if (countNotPdfFiles > 0) {
+  if (countNotPDFfiles > 0) {
+    // 🗨️, Files are 🚫 pdf
     String text = Utils.getFileOrFilesText(
-        countNotPdfFiles); // No File , 1 File, 2 Files, 3 Files etc.
+        countNotPDFfiles); // No File , 1 File, 2 Files, 3 Files etc.
     showSnackBar(context, "$text are not PDF", key);
   }
-
-  print("reverse Share end");
 }
