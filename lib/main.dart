@@ -179,6 +179,13 @@ class _HomeState extends State<Home> {
                         context
                             .read<PDFItemModel>()
                             .updateItem(await Utils.getPDFDataFromDB());
+
+                        if(dbIsEmpty){
+                          setState(() {
+                            dbIsEmpty = false;
+                          });
+                        }
+                        
                       }
                     }
                   }
