@@ -18,9 +18,8 @@ List<Widget> actionButtons({required BuildContext context}) {
   /// Refresh items List
   IconButton refresh = IconButton(
     onPressed: () async {
-      context
-          .read<PDFItemModel>()
-          .updateItemFromList(await Utils.getFilePathListFromDB());
+      // ➕ Update [_items]
+      context.read<PDFItemModel>().updateItem(await Utils.getPDFDataFromDB());
     },
     icon: Icon(Icons.refresh),
   );

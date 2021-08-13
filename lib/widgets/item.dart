@@ -1,26 +1,26 @@
-// 🎯 Dart imports:
-import 'dart:io';
-
 // 🐦 Flutter imports:
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 // 📦 Package imports:
 import 'package:open_file/open_file.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:thumbnailer/thumbnailer.dart';
 
 // 🌎 Project imports:
 import 'package:pdf_indexing/constants.dart';
 import 'package:pdf_indexing/functions/utils.dart' as Utils;
 import 'package:pdf_indexing/widgets/popup_menu.dart';
+import 'package:pdf_indexing/widgets/thumbnail.dart';
 
 /// 💄 Item Widget
 // ignore: must_be_immutable
 class Item extends StatelessWidget {
   final path;
+  final thumb;
   bool fileExist = true;
-  Item({required this.path});
+  Item({
+    required this.path,
+    required this.thumb,
+  });
   @override
   Widget build(BuildContext context) {
     isFileExist();
@@ -32,35 +32,37 @@ class Item extends StatelessWidget {
         // height: itemImageSize + 60,
         child: Column(
           children: [
-            Text(
-              Utils.getFileNameFromPath(path),
-              style: kItemWidgetTextStyle,
-            ),
-            InkWell(
-              onTap: () {
-                // Open File
-                OpenFile.open(path);
-              },
-              // 🖼️ Thumbnail of the PDF
-              child: Thumbnail(
-                key: fileExist ? Key(path) : Key(kFileNotFoundImage),
-                mimeType: fileExist ? 'application/pdf' : 'image/png',
-                widgetSize: itemImageSize - 25,
-                dataResolver: () async {
-                  // If File Exist Show Thumbnail of PDF
-                  // Else If File 🚫 Exist Show Thumbnail of 'no_file_found.png' image
-
-                  if (fileExist) {
-                    return File(path).readAsBytesSync();
-                  } else {
-                    //Return "No File Found by Andreas Wikström from the Noun Project" if File doesnot exist
-                    return (await rootBundle.load(kFileNotFoundImage))
-                        .buffer
-                        .asUint8List();
-                  }
-                },
+            /// 🔤 Title 💄
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text(
+                Utils.getFileNameFromPath(path),
+                style: kItemWidgetTextStyle,
               ),
             ),
+
+            /// 🖼️ Thumbnail 💄
+            InkWell(
+              onTap: () {
+                if (fileExist) {
+                  // Open File
+                  OpenFile.open(path);
+                } else {
+                  SnackBar snackBar =
+                      SnackBar(content: Text("Oops! File Not Found"));
+                  ScaffoldMessenger.of(context).showSnackBar(snackBar);
+                }
+              },
+
+              /// 🖼️ Thumbnail of the PDF
+              child: Thumbnail(
+                path: path,
+                thumb: thumb,
+                itemImageSize: itemImageSize,
+              ),
+            ),
+
+            /// Popup Menu & Share Icons 💄
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [

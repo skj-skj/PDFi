@@ -135,13 +135,6 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
-  font_awesome_flutter:
-    dependency: transitive
-    description:
-      name: font_awesome_flutter
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "9.1.0"
   http:
     dependency: transitive
     description:
@@ -199,19 +192,12 @@ packages:
     source: hosted
     version: "1.0.0"
   native_pdf_renderer:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: native_pdf_renderer
       url: "https://pub.dartlang.org"
     source: hosted
     version: "3.1.0"
-  native_pdf_view:
-    dependency: transitive
-    description:
-      name: native_pdf_view
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "4.1.0"
   nested:
     dependency: transitive
     description:
@@ -303,13 +289,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "4.1.0"
-  photo_view:
-    dependency: transitive
-    description:
-      name: photo_view
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "0.11.1"
   platform:
     dependency: transitive
     description:
@@ -399,13 +378,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.8.1"
-  spreadsheet_decoder:
-    dependency: transitive
-    description:
-      name: spreadsheet_decoder
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "2.0.0"
   sqflite:
     dependency: "direct main"
     description:
@@ -462,13 +434,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.3.0"
-  thumbnailer:
-    dependency: "direct main"
-    description:
-      name: thumbnailer
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "2.0.0"
   tint:
     dependency: transitive
     description:

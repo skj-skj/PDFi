@@ -1,13 +1,19 @@
+// 🎯 Dart imports:
+import 'dart:typed_data';
+
 // 🌎 Project imports:
 import 'package:pdf_indexing/functions/utils.dart' as Utils;
 
 /// 🧰 [PDFModel], used to create a [pdfModel] and 📥 Save to 🗄️ Database
 ///
 /// Contains
-///   - 🔠 path,🔠🔡 pdfText,🏷️ tags,#️⃣ hash,📁 folder
+///   - 🔠 path, 🖼️ Thumb, 🔠🔡 pdfText, 🏷️ tags, #️⃣ hash, 📁 folder
 class PDFModel {
   /// 🔠 [path], Contains path of the [pdfFile]
   final String path;
+
+  /// 🖼️ [thumb], Contains Thumbnail Byte Data of [pdfFile]
+  final Uint8List thumb;
 
   /// 🔠🔡 [pdfText], Contains text ⚙️📤 Extracted from 🥇 1st page of pdfFile
   final String pdfText;
@@ -31,6 +37,7 @@ class PDFModel {
 
   PDFModel({
     required this.path,
+    required this.thumb,
     required this.pdfText,
     required this.tags,
     required this.hash,
@@ -40,12 +47,13 @@ class PDFModel {
   /// 🗺️ toMap()
   ///
   /// ⚙️ Create Map of pdfModel, Contains:
-  ///   - 🔠 filename, 🔠 path, 🔠🔡 pdfText, 🏷️ tags, #️⃣ hash, 📁 folder
-  Map<String, String> toMap() {
+  ///   - 🔠 filename, 🔠 path, 🖼️ thumb 🔠🔡 pdfText, 🏷️ tags, #️⃣ hash, 📁 folder
+  Map<String, dynamic> toMap() {
     return {
       'filename': Utils.getFileNameFromPath(path),
       'path': path,
-      'pdfText': pdfText,
+      'thumb': thumb,
+      'pdfText': pdfText.trim(),
       'tags': tags,
       'hash': hash,
       'folder': folder

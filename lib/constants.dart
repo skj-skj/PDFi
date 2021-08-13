@@ -12,6 +12,7 @@ String kCreateTableQuery = '''
     CREATE TABLE $kPdfTableName (
 	    filename TEXT PRIMARY KEY,
       path TEXT,
+      thumb BLOB,
   	  pdfText TEXT,
   	  tags TEXT,
       hash TEXT,

@@ -1,3 +1,6 @@
+// 🎯 Dart imports:
+import 'dart:typed_data';
+
 // 📦 Package imports:
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
@@ -82,6 +85,18 @@ class DBHelper {
     }
   }
 
+  /// 🖼️ Return Thumnail form 🗄️ Database
+  Future<Uint8List?> getThumbnail(String path) async {
+    Database? dbClient = await db;
+    List<Map> results = await dbClient!
+        .query(kPdfTableName, columns: ['thumb'], where: "path = '$path");
+    if (results.length > 0) {
+      return results[0]['thumb'];
+    } else {
+      return null;
+    }
+  }
+
   /// ⏩🗄️ Return Database
   ///
   /// It open Database in 📁 Directory and Create Table in 🗄️ Database on first run
@@ -94,22 +109,23 @@ class DBHelper {
 
   /// ⏩[🗺️] Return [Map,]
   ///
-  /// Return [path] from all Rows
+  /// Return [path,thumb] from all Rows
   Future<List<Map>> queryForAllfilePaths() async {
     Database? dbClient = await db;
     return await dbClient!
-        .query(kPdfTableName, columns: ['path'], orderBy: kPathAsc);
+        .query(kPdfTableName, columns: ['path', 'thumb'], orderBy: kPathAsc);
   }
 
   /// ⏩[🗺️] Return [Map,]
   ///
-  /// Return [path] from Rows
-  /// Where pdfText,filename,tags contains [text]
+  /// Return [path,thumb] from Rows
+  ///
+  /// Where [pdfText,filename,tags] from 🗄️ Database Table contains 🔠 [text]
   Future<List<Map>> queryForFilePathsWithCondition(String text) async {
     Database? dbClient = await db;
     return await dbClient!.query(
       kPdfTableName,
-      columns: ['path'],
+      columns: ['path', 'thumb'],
       where: Utils.getWhereConditionForSearch(text),
       orderBy: kPathAsc,
     );

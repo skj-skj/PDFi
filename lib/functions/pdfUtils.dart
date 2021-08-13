@@ -1,8 +1,10 @@
 // 🎯 Dart imports:
 import 'dart:io';
+import 'dart:typed_data';
 
 // 📦 Package imports:
 import 'package:file_picker/file_picker.dart';
+import 'package:native_pdf_renderer/native_pdf_renderer.dart';
 import 'package:path/path.dart';
 import 'package:pdf_text/pdf_text.dart';
 
@@ -43,12 +45,26 @@ Future<PDFModel> getPdfModelOfFile(
   PDFPage page = doc.pageAt(1);
   String pageText = await page.text;
 
+  /// 📤 Extracting Thumbnail Image from [pdfSavedFile], at page 1
+  ///
+  /// JPEG Format
+  PdfDocument document =
+      await PdfDocument.openData(pdfSavedFile.readAsBytesSync());
+  final pageThumb = await document.getPage(1);
+  final pageThumbImage = await pageThumb.render(
+    width: pageThumb.width,
+    height: pageThumb.height,
+    format: PdfPageFormat.JPEG,
+  );
+  Uint8List thumb = pageThumbImage!.bytes;
+
   /// ⚙️ Generating [SHA1] #️⃣ of [pdfSavedFile]
   String hash = await Utils.getSHA1Hash(pdfSavedFile);
 
   /// ⚙️🧰 Creating pdfModel
   PDFModel pdfModel = PDFModel(
       path: pdfSavedFile.path,
+      thumb: thumb,
       pdfText: pageText,
       tags: '',
       hash: hash,

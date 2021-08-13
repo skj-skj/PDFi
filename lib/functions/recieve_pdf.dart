@@ -28,10 +28,13 @@ import 'package:pdf_indexing/model/pdfModel.dart';
 ///   - ☁️ Cloud Storage
 ///   - etc.
 ///
-/// Requires, BuildContext [context] & [_messengerKey]
+/// Requires, BuildContext [context], [_messengerKey], Function [updateIsImporting]
+///
+/// [updateIsImporting] is a callback to update the value of [isImporting] in the main.dart
 void recievePDF({
   required BuildContext context,
   required GlobalKey<ScaffoldMessengerState> key,
+  required Function updateIsImporting,
 }) async {
   // 🗄️ Database Helper
   DBHelper dbHelper = DBHelper();
@@ -59,7 +62,10 @@ void recievePDF({
 
   // 🗨️ SnackBar, if sharedFiles != []
   if (sharedFiles.length > 0) {
-    showSnackBar(context, "Files Importing, Please Wait", key);
+    // 📝 Setting isImporting to 1️⃣ true
+    // Will show 🌀 CircularProgressIndicator() on FAB
+    updateIsImporting(true);
+    showSnackBar(context, kImportingFilesMessage, key);
   }
 
   for (SharedMediaFile sharedFile in sharedFiles) {
@@ -85,6 +91,9 @@ void recievePDF({
         // 📥 Saving [pdfModel] in 🗄️ Database
         dbHelper.savePdf(pdfModel);
         countNewFiles++;
+
+        // ➕ Updating [item]
+        context.read<PDFItemModel>().updateItem(await Utils.getPDFDataFromDB());
       } catch (e) {
         print(e);
         print("looks like pdf is already stored in the DB");
@@ -93,13 +102,15 @@ void recievePDF({
     }
   }
 
-  // ➕ Updating [item]
-  context
-      .read<PDFItemModel>()
-      .updateItemFromList(await Utils.getFilePathListFromDB());
-
   // if sharedFiles != [], means user have shared some files
   if (sharedFiles.length > 0) {
+    // 📝 Setting isImporting to 1️⃣ true
+    // Will show ➕ on FAB
+    updateIsImporting(false);
+
+    // 🔥 Deleting Cache
+    Utils.deleteCache();
+
     // 🗨️, Files Imported Successfully SnackBar
     String text = Utils.getFileOrFilesText(
         countNewFiles); // No File , 1 File, 2 Files, 3 Files etc.

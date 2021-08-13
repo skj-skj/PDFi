@@ -19,12 +19,16 @@ void createFolderIfNotExist() async {
   }
 }
 
-/// 🗑️ Delete Cache Files
+/// 🗑️🔥 Delete Cache Files
 void deleteCache() async {
-  final cacheDir = await getTemporaryDirectory();
-
-  if (cacheDir.existsSync()) {
-    cacheDir.deleteSync(recursive: true);
+  try {
+    final cacheDir = await getTemporaryDirectory();
+    if (cacheDir.existsSync()) {
+      cacheDir.deleteSync(recursive: true);
+    }
+  } catch (e) {
+    print(e);
+    print("Cache Delete Error");
   }
 }
 
@@ -96,6 +100,14 @@ Future<List<String>> getFilePathListFromDir() async {
       .where((filePath) => isPDF(filePath))
       .toList();
   return filePaths;
+}
+
+/// [🗺️], Return [Map] from 🗄️ Database
+///
+/// Contains ['path','thumb'] Column
+Future<List<Map>> getPDFDataFromDB() {
+  DBHelper dbH = DBHelper();
+  return dbH.queryForAllfilePaths();
 }
 
 /// #️⃣ Return [SHA1] hash of [file]
