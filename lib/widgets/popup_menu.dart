@@ -56,8 +56,10 @@ getTextController({
 }
 
 /// 💄 Popup Context Menu Method
-PopupMenuButton<int> popupMenu(
-    {required BuildContext context, required String path}) {
+PopupMenuButton<int> popupMenu({
+  required BuildContext context,
+  required String path,
+}) {
   /// [💄], List of Menu Item
   List<PopupMenuItem<int>> menu = [
     PopupMenuItem(
@@ -75,6 +77,7 @@ PopupMenuButton<int> popupMenu(
     onSelected: (value) async {
       DBHelper dbH = DBHelper();
 
+      // 🏷️ For Tags
       if (value == 1) {
         String oldTags = await getOldTags(path: path, dbHelper: dbH);
         String tagsText = "";
@@ -108,7 +111,9 @@ PopupMenuButton<int> popupMenu(
                 ),
               );
             });
-      } else if (value == 2) {
+      }
+      // 🗑️🔥 For Delete
+      else if (value == 2) {
         showDialog(
             context: context,
             builder: (BuildContext context) {
@@ -120,7 +125,10 @@ PopupMenuButton<int> popupMenu(
                   TextButton(
                     onPressed: () {
                       deleteButtonOnYes(
-                          context: context, path: path, dbHelper: dbH);
+                        context: context,
+                        path: path,
+                        dbHelper: dbH,
+                      );
                     },
                     child: Text("YES"),
                   )

@@ -25,6 +25,8 @@ import 'package:pdf_indexing/widgets/search_widget.dart';
 
 //  Package imports:
 
+//  Package imports:
+
 void main() {
   runApp(
     /// ✅ Implementation of Provider State Management
@@ -87,158 +89,185 @@ class _HomeState extends State<Home> {
       // For SnackBar
       scaffoldMessengerKey: _messengerKey,
       home: SafeArea(
-        child: Scaffold(
-          appBar: AppBar(
-            title: Text(kAppTitle),
-            actions: actionButtons(context: context),
-          ),
-          body: WillPopScope(
-            // 🤝 Handle 🔙🔙 Double Back to Exit
-            onWillPop: onWillPop,
-            child: SingleChildScrollView(
-              child: Column(
-                children: [
-                  SearchWidget(),
-                  (storagePermissionStatus)
-                      ? (!dbIsEmpty)
-                          ? Consumer<PDFItemModel>(
-                              builder: (context, pdfItem, child) {
-                                return Wrap(
-                                  children: context.read<PDFItemModel>().items,
-                                );
-                              },
-                            )
-                          : Center(
-                              child: Text(kDatabaseEmptyText),
-                            )
-                      : Center(
-                          child: TextButton(
-                            onPressed: () async {
-                              bool permissionStatus =
-                                  await reqP.requestStoragePermission();
-                              setState(() {
-                                storagePermissionStatus = permissionStatus;
-                              });
+        child: GestureDetector(
+          onTap: () {
+            // ✖️ Remove Focus from TextField [SearchWidget]
+            FocusScopeNode currFocus = FocusScope.of(context);
+            if (!currFocus.hasPrimaryFocus && currFocus.hasFocus) {
+              FocusManager.instance.primaryFocus!.unfocus();
+            }
+          },
+          child: Scaffold(
+            appBar: AppBar(
+              title: Text(kAppTitle),
+              actions: actionButtons(context: context),
+            ),
+            body: WillPopScope(
+              // 🤝 Handle 🔙🔙 Double Back to Exit
+              onWillPop: onWillPop,
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    SearchWidget(),
+                    (storagePermissionStatus)
+                        ? Consumer<PDFItemModel>(
+                            builder: (context, pdfItem, child) {
+                              return Wrap(
+                                children:
+                                    (context.read<PDFItemModel>().items.length >
+                                            0)
+                                        ? context.read<PDFItemModel>().items
+                                        : [
+                                            Center(
+                                              child: Text(kDatabaseEmptyText),
+                                            )
+                                          ],
+                              );
                             },
-                            child: Text(kGivePermissionText),
+                          )
+                        : Center(
+                            child: ElevatedButton(
+                              onPressed: () async {
+                                requestStoragePermission();
+                              },
+                              child: Text(kGivePermissionText),
+                            ),
                           ),
-                        ),
-                  SizedBox(
-                    height: 60,
-                  )
-                ],
+                    SizedBox(
+                      height: 60,
+                    )
+                  ],
+                ),
               ),
             ),
-          ),
-          floatingActionButton: FloatingActionButton(
-            onPressed: () async {
-              // 🤔 Checking if Storage permission given or not
-              if (storagePermissionStatus) {
-                // 🤔 Checking if Currently App is Imporing pdf files or not
-                if (!isImporting) {
-                  // List of Filename in the 📁 App Directory
-                  List<String> pdfFileNameAlreadyInDir =
-                      (await Utils.getFilePathListFromDir())
-                          .map((path) => Utils.getFileNameFromPath(path))
-                          .toList();
+            floatingActionButton: FloatingActionButton(
+              onPressed: () async {
+                // 🤔 Checking if Storage permission given or not
+                if (storagePermissionStatus) {
+                  // 🤔 Checking if Currently App is Imporing pdf files or not
+                  if (!isImporting) {
+                    // List of Filename in the 📁 App Directory
+                    List<String> pdfFileNameAlreadyInDir =
+                        (await Utils.getFilePathListFromDir())
+                            .map((path) => Utils.getFileNameFromPath(path))
+                            .toList();
 
-                  // 🗄️ Database Helper
-                  DBHelper dbHelper = DBHelper();
+                    // 🗄️ Database Helper
+                    DBHelper dbHelper = DBHelper();
 
-                  // 📟 [countNewFiles] count new files which are imported
-                  // 📟 [countExistFiles] count already existing files in 📁 App Directory
-                  int countNewFiles = 0, countExistFiles = 0;
+                    // 📟 [countNewFiles] count new files which are imported
+                    // 📟 [countExistFiles] count already existing files in 📁 App Directory
+                    // 📟 [countCorrupt] count corrupt files which user selected
+                    int countNewFiles = 0,
+                        countExistFiles = 0,
+                        countCorrupt = 0;
 
-                  // [📄], List of All PDF files picked by the user
-                  List<File>? pdfFiles = await PdfUtils.pickPDFFiles();
+                    // [📄], List of All PDF files picked by the user
+                    List<File>? pdfFiles = await PdfUtils.pickPDFFiles();
 
-                  if (pdfFiles != null) {
-                    // updating [isImporting] to 1️⃣ true
-                    // showing 🌀 CircularProgressIndicator() on FAB
-                    updateIsImporting(true);
+                    if (pdfFiles != null) {
+                      // updating [isImporting] to 1️⃣ true
+                      // showing 🌀 CircularProgressIndicator() on FAB
+                      updateIsImporting(true);
 
-                    // 🗨️ Showing File is Importing Message
-                    showSnackBar(
-                        context, kImportingFilesMessage, _messengerKey);
+                      // 🗨️ Showing File is Importing Message
+                      showSnackBar(
+                          context, kImportingFilesMessage, _messengerKey);
 
-                    for (File pdfFile in pdfFiles) {
-                      // 🤔 Checking if the [pdfFile] #️⃣ Already Exist in 🗄️ Database or not
-                      if (await Utils.isHashExists(pdfFile)) {
-                        countExistFiles++;
-                        continue;
-                      } else {
-                        // ⚙️ Generating [pdfModel] for [pdfFile]
-                        PDFModel pdfModel = await PdfUtils.getPdfModelOfFile(
-                            pdfFile, pdfFileNameAlreadyInDir);
+                      for (File pdfFile in pdfFiles) {
+                        // 🤔 Checking if the [pdfFile] #️⃣ Already Exist in 🗄️ Database or not
+                        if (await Utils.isHashExists(pdfFile)) {
+                          countExistFiles++;
+                          continue;
+                        } else {
+                          try {
+                            // ⚙️ Generating [pdfModel] for [pdfFile]
+                            PDFModel pdfModel =
+                                await PdfUtils.getPdfModelOfFile(
+                                    pdfFile, pdfFileNameAlreadyInDir);
 
-                        // 📥 Saving [pdfModel] in 🗄️ Database
-                        dbHelper.savePdf(pdfModel);
-                        countNewFiles++;
+                            // 📥 Saving [pdfModel] in 🗄️ Database
+                            dbHelper.savePdf(pdfModel);
+                            countNewFiles++;
 
-                        // ➕ Updating [item]
-                        context
-                            .read<PDFItemModel>()
-                            .updateItem(await Utils.getPDFDataFromDB());
+                            // ➕ Updating [item]
+                            context
+                                .read<PDFItemModel>()
+                                .updateItem(await Utils.getPDFDataFromDB());
 
-                        if(dbIsEmpty){
-                          setState(() {
-                            dbIsEmpty = false;
-                          });
+                            if (dbIsEmpty) {
+                              setState(() {
+                                dbIsEmpty = false;
+                              });
+                            }
+                          } catch (e) {
+                            print("Error While Importing: ${e.toString()}");
+                            countCorrupt++;
+                            continue;
+                          }
                         }
-                        
                       }
                     }
-                  }
-
-                  // if [countNewFiles] > 0, means some new files is been 📥 saved in the 🗄️ Database
-                  if (countNewFiles > 0) {
                     // updating [isImporting] to 0️⃣ false
                     // showing ➕ on FAB
                     updateIsImporting(false);
 
-                    // 🔥 Deleting Cache
-                    Utils.deleteCache();
-                    // 📝 Set [dbIsEmpty] to true, if set to false
-                    if (dbIsEmpty) {
-                      setState(() {
-                        dbIsEmpty = false;
-                      });
+                    // if [countNewFiles] > 0, means some new files is been 📥 saved in the 🗄️ Database
+                    if (countNewFiles > 0) {
+                      // 🔥 Deleting Cache
+                      Utils.deleteCache();
+                      // 📝 Set [dbIsEmpty] to true, if set to false
+                      if (dbIsEmpty) {
+                        setState(() {
+                          dbIsEmpty = false;
+                        });
+                      }
+
+                      // 🗨️, Files Imported Successfully SnackBar
+                      String text = Utils.getFileOrFilesText(countNewFiles);
+                      showSnackBar(context, "$text $kImportedSuccessfully",
+                          _messengerKey);
                     }
 
-                    // 🗨️, Files Imported Successfully SnackBar
-                    String text = Utils.getFileOrFilesText(countNewFiles);
-                    showSnackBar(
-                        context, "$text $kImportedSuccessfully", _messengerKey);
-                  }
-
-                  // if [countExistFiles] > 0
-                  // means some files user selected already exists in the 🗄️ Databse
-                  if (countExistFiles > 0) {
-                    // 🗨️, Files already in the 🗄️ Database SnackBar
-                    String text = Utils.getFileOrFilesText(countExistFiles);
-                    showSnackBar(context, "$text $kAlreadyInDB", _messengerKey);
+                    // if [countExistFiles] > 0
+                    // means some files user selected already exists in the 🗄️ Databse
+                    if (countExistFiles > 0) {
+                      // 🗨️, Files already in the 🗄️ Database SnackBar
+                      String text = Utils.getFileOrFilesText(countExistFiles);
+                      showSnackBar(
+                          context, "$text $kAlreadyInDB", _messengerKey);
+                    }
+                    // if [countCorrupt] > 0
+                    // means some files which user selected are corrupt
+                    if (countCorrupt > 0) {
+                      // 🗨️, Files is Corrupt in the 🗄️ Database SnackBar
+                      String text = Utils.getFileOrFilesText(countExistFiles);
+                      showSnackBar(context, "$text are Corrupt", _messengerKey);
+                    }
+                  } else {
+                    // 🗨️, [isImporting] = 1️⃣ true
+                    // showing 🌀 CircularProgressIndicator() on FAB
+                    showSnackBar(context, "Files Are Importing, Please Wait",
+                        _messengerKey);
                   }
                 } else {
-                  // 🗨️, [isImporting] = 1️⃣ true
-                  // showing 🌀 CircularProgressIndicator() on FAB
-                  showSnackBar(context, "Files Are Importing, Please Wait",
-                      _messengerKey);
+                  // 🗨️, 🙏 Permission not Granted
+                  showSnackBar(
+                      context, "$kGivePermissionTextFAB", _messengerKey);
+                  requestStoragePermission();
                 }
-              } else {
-                // 🗨️, 🙏 Permission not Granted
-                showSnackBar(context, "$kGivePermissionTextFAB", _messengerKey);
-              }
-              FilePicker.platform.clearTemporaryFiles();
-            },
-            child: (isImporting)
-                ?
-                // 🌀
-                CircularProgressIndicator(
-                    color: Colors.white,
-                  )
-                :
-                // ➕
-                Icon(Icons.add),
+                FilePicker.platform.clearTemporaryFiles();
+              },
+              child: (isImporting)
+                  ?
+                  // 🌀
+                  CircularProgressIndicator(
+                      color: Colors.white,
+                    )
+                  :
+                  // ➕
+                  Icon(Icons.add),
+            ),
           ),
         ),
       ),
@@ -273,20 +302,44 @@ class _HomeState extends State<Home> {
     }
   }
 
+  /// 🙏 Requesting Storage Permission
+  ///
+  /// and sets [storagePermissionStatus]
+  ///
+  ///   - true = Granted
+  ///   - false = Denied
+  void requestStoragePermission() async {
+    bool permissionStatus = await reqP.requestStoragePermission();
+    setState(() {
+      storagePermissionStatus = permissionStatus;
+    });
+  }
+
   /// 📝🗄️
   ///
   /// Set [dbIsEmpty]
   ///   - true = 🗄️ Database is empty
   ///   - false = 🗄️ Database have data
   void setDBIsEmpty() async {
-    print("Before $dbIsEmpty");
     List<String> filePathFromDB = await Utils.getFilePathListFromDB();
+    bool value = true;
     if (filePathFromDB.length > 0) {
-      setState(() {
-        dbIsEmpty = false;
-      });
-      print("After $dbIsEmpty");
+      value = false;
     }
+    setState(() {
+      dbIsEmpty = value;
+    });
+  }
+
+  /// 📝🗄️ 🛠️ Manually
+  ///
+  /// Set [dbIsEmpty] Manually
+  ///   - true = 🗄️ Database is empty
+  ///   - false = 🗄️ Database have data
+  void setDBIsEmptyManual(bool value) async {
+    setState(() {
+      dbIsEmpty = value;
+    });
   }
 
   /// 📝🙏

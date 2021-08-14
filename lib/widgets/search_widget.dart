@@ -18,8 +18,15 @@ class SearchWidget extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.all(18.0),
       child: TextField(
+        // controller: TextEditingController(text: ''),
         onChanged: (text) async {
           DBHelper dbHelper = DBHelper();
+
+          if (text == '') {
+            context
+                .read<PDFItemModel>()
+                .updateItem(await dbHelper.queryForAllfilePaths());
+          }
 
           List<Map> dbResultItems =
               await dbHelper.queryForFilePathsWithCondition(text);

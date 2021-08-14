@@ -45,15 +45,27 @@ void recievePDF({
   // 📟 [countNewFiles] count new files which are imported
   // 📟 [countExistFiles] count already existing files in 📁 App Directory
   // 📟 [countNotPDFfiles] count files which are not pdf
-  int countNewFiles = 0, countExistFiles = 0, countNotPDFfiles = 0;
+  // 📟 [countCorrupt] count corrupt files which user selected
+  int countNewFiles = 0,
+      countExistFiles = 0,
+      countNotPDFfiles = 0,
+      countCorrupt = 0;
 
-  // When 📱 App is 📪 Closed
-  sharedFiles += await ReceiveSharingIntent.getInitialMedia();
+  try {
+    // When 📱 App is 📪 Closed
+    sharedFiles += await ReceiveSharingIntent.getInitialMedia();
+    print("Shared 1");
 
-  // When 📱 App is 📭 in Memory
-  ReceiveSharingIntent.getMediaStream().listen((List<SharedMediaFile> files) {
-    sharedFiles += files;
-  });
+    // When 📱 App is 📭 in Memory
+    ReceiveSharingIntent.getMediaStream().listen((List<SharedMediaFile> files) {
+      sharedFiles += files;
+    });
+  } catch (e) {
+    print("Shared Error:");
+    print(e);
+    sharedFiles = [];
+    countCorrupt++;
+  }
 
   // List of Filename in the 📁 App Directory
   List<String> pdfFileNameAlreadyInDir = (await Utils.getFilePathListFromDir())
@@ -79,15 +91,16 @@ void recievePDF({
     }
     // 🤔 Checking if the [pdfFile] #️⃣ Already Exist in 🗄️ Database or not
     if (await Utils.isHashExists(pdfFile)) {
-      print("Already Exists");
       countExistFiles++;
       continue;
     } else {
-      // ⚙️ Generating [pdfModel] for [pdfFile]
-      PDFModel pdfModel =
-          await PdfUtils.getPdfModelOfFile(pdfFile, pdfFileNameAlreadyInDir);
       // ⛔ Handing Error
       try {
+        // ⚙️ Generating [pdfModel] for [pdfFile]
+        PDFModel pdfModel =
+            await PdfUtils.getPdfModelOfFile(pdfFile, pdfFileNameAlreadyInDir);
+        print(pdfModel.toString());
+
         // 📥 Saving [pdfModel] in 🗄️ Database
         dbHelper.savePdf(pdfModel);
         countNewFiles++;
@@ -95,19 +108,19 @@ void recievePDF({
         // ➕ Updating [item]
         context.read<PDFItemModel>().updateItem(await Utils.getPDFDataFromDB());
       } catch (e) {
-        print(e);
-        print("looks like pdf is already stored in the DB");
+        print("Error While Importing: ${e.toString()}");
+        countCorrupt++;
         continue;
       }
     }
   }
 
+  // 📝 Setting isImporting to 1️⃣ true
+  // Will show ➕ on FAB
+  updateIsImporting(false);
+
   // if sharedFiles != [], means user have shared some files
   if (sharedFiles.length > 0) {
-    // 📝 Setting isImporting to 1️⃣ true
-    // Will show ➕ on FAB
-    updateIsImporting(false);
-
     // 🔥 Deleting Cache
     Utils.deleteCache();
 
@@ -127,5 +140,12 @@ void recievePDF({
     String text = Utils.getFileOrFilesText(
         countNotPDFfiles); // No File , 1 File, 2 Files, 3 Files etc.
     showSnackBar(context, "$text are not PDF", key);
+  }
+  // if [countCorrupt] > 0
+  // means some files which user selected are corrupt
+  if (countCorrupt > 0) {
+    // 🗨️, Files is Corrupt in the 🗄️ Database SnackBar
+    String text = Utils.getFileOrFilesText(countExistFiles);
+    showSnackBar(context, "$text are Corrupt", key);
   }
 }

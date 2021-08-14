@@ -15,16 +15,19 @@ class PDFItemModel extends ChangeNotifier {
   /// Items => 💄 Widget
   List<Item> _items = [];
 
+  /// 0️⃣/1️⃣ [_isFirstRun]
+  ///
+  /// Does the app running for the first time
+  bool _isFirstRun = true;
+
   /// 🗞️ Getter for [_items]
   ///
   /// calls [fetchItems()] if _items = []
   List<Item> get items {
-    if (_items.length > 0) {
-      return _items;
-    } else {
+    if (_isFirstRun) {
       fetchItems();
-      return _items;
     }
+    return _items;
   }
 
   /// 🗑️ Delete Item contains this [path]
@@ -50,6 +53,8 @@ class PDFItemModel extends ChangeNotifier {
         ),
       );
     }
+    _isFirstRun = false;
+    print('first run');
     _items = tempItems;
 
     // 🔈 Notifying Listeners
@@ -61,12 +66,14 @@ class PDFItemModel extends ChangeNotifier {
   /// From [🗺️], Contains 🗄️ Database Rows
   void updateItem(List<Map> dbResultItems) {
     _items = [];
+
     for (Map dbResultItem in dbResultItems) {
       _items.add(Item(
         path: dbResultItem['path'],
         thumb: dbResultItem['thumb'],
       ));
     }
+
     notifyListeners();
   }
 

@@ -21,7 +21,7 @@ String kCreateTableQuery = '''
     ''';
 
 /// 🔠, 🗄️ Database is Empty Message
-String kDatabaseEmptyText = "Database is Empty, Click on + to import PDF files";
+String kDatabaseEmptyText = "No Files Found, Click on + to import PDF files";
 
 /// 🔠, 🗄️ Database file Name
 String kDBFileName = "data.db";
