@@ -2,6 +2,9 @@
 import 'dart:io';
 import 'dart:typed_data';
 
+// 🐦 Flutter imports:
+import 'package:flutter/services.dart';
+
 // 📦 Package imports:
 import 'package:file_picker/file_picker.dart';
 import 'package:native_pdf_renderer/native_pdf_renderer.dart';
@@ -36,27 +39,56 @@ Future<PDFModel> getPdfModelOfFile(
     }
   }
 
-  /// 📥 Save [pdfFile] in App Directory
-  File pdfSavedFile =
-      await pdfFile.copy(join(storagePath, kPdfFilesPath, filenameToUse));
+  /// 📄 [pdfSavedFile] is File, when file is saved in app directory
+  /// pdfSavedFile refers to that
+  File pdfSavedFile;
 
-  /// 📤 Extracting Text from [pdfSavedFile], at page 1
-  PDFDoc doc = await PDFDoc.fromFile(pdfSavedFile);
-  PDFPage page = doc.pageAt(1);
-  String pageText = await page.text;
+  /// 🔠 Will contain text of 1st page of [pdfSavedFile]
+  String pageText;
 
-  /// 📤 Extracting Thumbnail Image from [pdfSavedFile], at page 1
-  ///
-  /// JPEG Format
-  PdfDocument document =
-      await PdfDocument.openData(pdfSavedFile.readAsBytesSync());
-  final pageThumb = await document.getPage(1);
-  final pageThumbImage = await pageThumb.render(
-    width: pageThumb.width,
-    height: pageThumb.height,
-    format: PdfPageFormat.JPEG,
-  );
-  Uint8List thumb = pageThumbImage!.bytes;
+  /// 🖼️ Will store the thumbnail of [pdfSavedFile]
+  Uint8List thumb;
+
+  try {
+    /// 📥 Save [pdfFile] in App Directory
+    pdfSavedFile =
+        await pdfFile.copy(join(storagePath, kPdfFilesPath, filenameToUse));
+  } catch (e) {
+    /// ❗✖️ if faild to saved pdf file to app directory
+    /// Null pdfModel will return
+    return kNullPDFModel;
+  }
+  try {
+    /// 📤 Extracting Text from [pdfSavedFile], at page 1
+    PDFDoc doc = await PDFDoc.fromFile(pdfSavedFile);
+    PDFPage page = doc.pageAt(1);
+    pageText = await page.text;
+  } catch (e) {
+    /// ❗✖️ if faild to Extract text
+    /// [pageText] = '' (Empty String)
+    pageText = '';
+  }
+
+  try {
+    /// 📤 Extracting Thumbnail Image from [pdfSavedFile], at page 1
+    ///
+    /// JPEG Format
+    PdfDocument document =
+        await PdfDocument.openData(pdfSavedFile.readAsBytesSync());
+    final pageThumb = await document.getPage(1);
+    final pageThumbImage = await pageThumb.render(
+      width: pageThumb.width ~/ 4,
+      height: pageThumb.height ~/ 4,
+      format: PdfPageFormat.JPEG,
+    );
+    thumb = pageThumbImage!.bytes;
+  } catch (e) {
+    /// ❗✖️ If faild to Extract 🖼️ Thumbnail,
+    /// Thumbnail of "no_file_found.png" will be saved in thumb
+    thumb = (await rootBundle.load('assets/images/no_file_found.png'))
+        .buffer
+        .asUint8List();
+  }
 
   /// ⚙️ Generating [SHA1] #️⃣ of [pdfSavedFile]
   String hash = await Utils.getSHA1Hash(pdfSavedFile);

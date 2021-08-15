@@ -26,6 +26,9 @@ void deleteCache() async {
     if (cacheDir.existsSync()) {
       cacheDir.deleteSync(recursive: true);
     }
+
+    /// ➕📁 Create Cache Directory after deleting it.
+    cacheDir.createSync();
   } catch (e) {
     print(e);
     print("Cache Delete Error");

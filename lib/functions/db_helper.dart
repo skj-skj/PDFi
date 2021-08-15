@@ -107,6 +107,14 @@ class DBHelper {
     return db;
   }
 
+  /// ⏩📟 Return Total No of Rows in the 🗄️ Database Table
+  Future<int> noOfRows() async {
+    Database? dbClient = await db;
+    List<Map> results =
+        await dbClient!.rawQuery("SELECT COUNT(*) FROM $kPdfTableName");
+    return results[0]["COUNT(*)"];
+  }
+
   /// ⏩[🗺️] Return [Map,]
   ///
   /// Return [path,thumb] from all Rows

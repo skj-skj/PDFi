@@ -18,20 +18,18 @@ import 'package:pdf_indexing/functions/snackbar.dart';
 import 'package:pdf_indexing/functions/utils.dart' as Utils;
 import 'package:pdf_indexing/model/pdfItemModel.dart';
 import 'package:pdf_indexing/model/pdfModel.dart';
+import 'package:pdf_indexing/model/progress_model.dart';
 import 'package:pdf_indexing/widgets/action_buttons.dart';
 import 'package:pdf_indexing/widgets/search_widget.dart';
-
-//  Package imports:
-
-//  Package imports:
-
-//  Package imports:
 
 void main() {
   runApp(
     /// ✅ Implementation of Provider State Management
-    ChangeNotifierProvider(
-      create: (context) => PDFItemModel(),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (context) => PDFItemModel()),
+        ChangeNotifierProvider(create: (context) => ProgressModel()),
+      ],
       child: Home(),
     ),
   );
@@ -67,12 +65,6 @@ class _HomeState extends State<Home> {
   ///
   /// set to false at first
   bool storagePermissionStatus = false;
-
-  /// is 🗄️ Database Empty
-  ///
-  ///   - true = yes (No Data)
-  ///   - false = no (Some Data)
-  bool dbIsEmpty = true;
 
   /// is App is currently importing pdf
   ///
@@ -146,6 +138,10 @@ class _HomeState extends State<Home> {
                 if (storagePermissionStatus) {
                   // 🤔 Checking if Currently App is Imporing pdf files or not
                   if (!isImporting) {
+                    // updating [isImporting] to 1️⃣ true
+                    // showing 🌀 CircularProgressIndicator() on FAB
+                    updateIsImporting(true);
+
                     // List of Filename in the 📁 App Directory
                     List<String> pdfFileNameAlreadyInDir =
                         (await Utils.getFilePathListFromDir())
@@ -165,16 +161,24 @@ class _HomeState extends State<Home> {
                     // [📄], List of All PDF files picked by the user
                     List<File>? pdfFiles = await PdfUtils.pickPDFFiles();
 
+                    // 📝 Setting Default Value of Current & Total
+                    // For Progress
+                    context.read<ProgressModel>().setDefaultValue();
+
                     if (pdfFiles != null) {
-                      // updating [isImporting] to 1️⃣ true
-                      // showing 🌀 CircularProgressIndicator() on FAB
-                      updateIsImporting(true);
+                      // 📝 Set Total Values = Total No of Files user Selected
+                      context
+                          .read<ProgressModel>()
+                          .updateTotalValue(pdfFiles.length);
 
                       // 🗨️ Showing File is Importing Message
                       showSnackBar(
                           context, kImportingFilesMessage, _messengerKey);
 
                       for (File pdfFile in pdfFiles) {
+                        // ➕ Updating the progress of Current Value by 1
+                        context.read<ProgressModel>().currentValueIncrement();
+
                         // 🤔 Checking if the [pdfFile] #️⃣ Already Exist in 🗄️ Database or not
                         if (await Utils.isHashExists(pdfFile)) {
                           countExistFiles++;
@@ -185,21 +189,24 @@ class _HomeState extends State<Home> {
                             PDFModel pdfModel =
                                 await PdfUtils.getPdfModelOfFile(
                                     pdfFile, pdfFileNameAlreadyInDir);
-
-                            // 📥 Saving [pdfModel] in 🗄️ Database
-                            dbHelper.savePdf(pdfModel);
-                            countNewFiles++;
-
+                            // 🤔 Checking if the pdfModel is not Null Model
+                            if (pdfModel.path != 'null') {
+                              // 📥 Saving [pdfModel] in 🗄️ Database
+                              dbHelper.savePdf(pdfModel);
+                              countNewFiles++;
+                            } else {
+                              countCorrupt++;
+                            }
                             // ➕ Updating [item]
                             context
                                 .read<PDFItemModel>()
                                 .updateItem(await Utils.getPDFDataFromDB());
 
-                            if (dbIsEmpty) {
-                              setState(() {
-                                dbIsEmpty = false;
-                              });
-                            }
+                            // if (dbIsEmpty) {
+                            //   setState(() {
+                            //     dbIsEmpty = false;
+                            //   });
+                            // }
                           } catch (e) {
                             print("Error While Importing: ${e.toString()}");
                             countCorrupt++;
@@ -212,16 +219,14 @@ class _HomeState extends State<Home> {
                     // showing ➕ on FAB
                     updateIsImporting(false);
 
+                    // 📝 Setting Default Value of Current & Total
+                    // For Progress to Restart
+                    context.read<ProgressModel>().setDefaultValue();
+
                     // if [countNewFiles] > 0, means some new files is been 📥 saved in the 🗄️ Database
                     if (countNewFiles > 0) {
                       // 🔥 Deleting Cache
                       Utils.deleteCache();
-                      // 📝 Set [dbIsEmpty] to true, if set to false
-                      if (dbIsEmpty) {
-                        setState(() {
-                          dbIsEmpty = false;
-                        });
-                      }
 
                       // 🗨️, Files Imported Successfully SnackBar
                       String text = Utils.getFileOrFilesText(countNewFiles);
@@ -260,12 +265,37 @@ class _HomeState extends State<Home> {
               },
               child: (isImporting)
                   ?
-                  // 🌀
-                  CircularProgressIndicator(
-                      color: Colors.white,
+                  // 🌀 For Showing CircularProgressIndicator & Percentage
+                  // To Show The progress of importing files
+                  // Used 📚 [Stack] to show  percentage value inside 🌀 CircularProgressIndicator
+                  Stack(
+                      children: [
+                        // Used [SizedBox] to Increase the size of 🌀 CircularProgressIndicator
+                        SizedBox(
+                          width: 90,
+                          height: 90,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                          ),
+                        ),
+                        Center(
+                          child: Consumer<ProgressModel>(
+                            // This Shows Percentage of the Progress
+                            builder: (context, progressModel, child) {
+                              int currValue =
+                                  context.read<ProgressModel>().currValue;
+                              int totalValue =
+                                  context.read<ProgressModel>().totalValue;
+                              return Text(
+                                  "${((currValue / totalValue) * 100).toInt()}%");
+                            },
+                            // child: ,
+                          ),
+                        ),
+                      ],
                     )
                   :
-                  // ➕
+                  // ➕, Currently no file is being imported
                   Icon(Icons.add),
             ),
           ),
@@ -280,7 +310,6 @@ class _HomeState extends State<Home> {
     super.initState();
     Utils.createFolderIfNotExist();
     setstoragePermissionStatus();
-    setDBIsEmpty();
     recievePDF(
         context: context,
         key: _messengerKey,
@@ -315,40 +344,16 @@ class _HomeState extends State<Home> {
     });
   }
 
-  /// 📝🗄️
-  ///
-  /// Set [dbIsEmpty]
-  ///   - true = 🗄️ Database is empty
-  ///   - false = 🗄️ Database have data
-  void setDBIsEmpty() async {
-    List<String> filePathFromDB = await Utils.getFilePathListFromDB();
-    bool value = true;
-    if (filePathFromDB.length > 0) {
-      value = false;
-    }
-    setState(() {
-      dbIsEmpty = value;
-    });
-  }
-
-  /// 📝🗄️ 🛠️ Manually
-  ///
-  /// Set [dbIsEmpty] Manually
-  ///   - true = 🗄️ Database is empty
-  ///   - false = 🗄️ Database have data
-  void setDBIsEmptyManual(bool value) async {
-    setState(() {
-      dbIsEmpty = value;
-    });
-  }
-
   /// 📝🙏
   ///
   /// Set Storage Persmission Status
   ///   - true = Granted
   ///   - false = Denied
   void setstoragePermissionStatus() async {
-    storagePermissionStatus = await reqP.getStoragePermissionStatus();
+    bool value = await reqP.getStoragePermissionStatus();
+    setState(() {
+      storagePermissionStatus = value;
+    });
   }
 
   /// 📝 Updating value of [isImporing]

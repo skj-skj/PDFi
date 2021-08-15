@@ -1,5 +1,11 @@
+// 🎯 Dart imports:
+import 'dart:typed_data';
+
 // 🐦 Flutter imports:
 import 'package:flutter/material.dart';
+
+// 🌎 Project imports:
+import 'package:pdf_indexing/model/pdfModel.dart';
 
 /// 🔠🗨️, already in 🗄️ db text
 String kAlreadyInDB = "already in the database";
@@ -20,7 +26,7 @@ String kCreateTableQuery = '''
     )
     ''';
 
-/// 🔠, 🗄️ Database is Empty Message
+/// , 🗄️ Database is Empty Message
 String kDatabaseEmptyText = "No Files Found, Click on + to import PDF files";
 
 /// 🔠, 🗄️ Database file Name
@@ -46,6 +52,16 @@ String kImportingFilesMessage = "Importing Files, Please Wait";
 
 /// 💄 TextStyle for [Item]
 TextStyle kItemWidgetTextStyle = TextStyle(fontSize: 12);
+
+/// Null [PDFModel], when pdf file is failed to saved in app 📁 directory this is used
+PDFModel kNullPDFModel = PDFModel(
+  path: 'null',
+  pdfText: '',
+  thumb: Uint8List(0),
+  hash: '',
+  folder: '',
+  tags: '',
+);
 
 /// 🔠, [path] Asending for SQLite
 String kPathAsc = "path ASC";

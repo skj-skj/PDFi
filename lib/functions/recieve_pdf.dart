@@ -17,6 +17,7 @@ import 'package:pdf_indexing/functions/snackbar.dart';
 import 'package:pdf_indexing/functions/utils.dart' as Utils;
 import 'package:pdf_indexing/model/pdfItemModel.dart';
 import 'package:pdf_indexing/model/pdfModel.dart';
+import 'package:pdf_indexing/model/progress_model.dart';
 
 // it recieve pdf from other apps sharing intent
 /// 📲 recieve pdf File
@@ -36,6 +37,12 @@ void recievePDF({
   required GlobalKey<ScaffoldMessengerState> key,
   required Function updateIsImporting,
 }) async {
+  // 📝 Setting isImporting to 1️⃣ true
+  // Will show 🌀 CircularProgressIndicator() on FAB
+  updateIsImporting(true);
+
+  Future.delayed(Duration(seconds: 1));
+
   // 🗄️ Database Helper
   DBHelper dbHelper = DBHelper();
 
@@ -66,6 +73,9 @@ void recievePDF({
     sharedFiles = [];
     countCorrupt++;
   }
+  // 📝 Setting Default Value of Current & Total
+  // For Progress
+  context.read<ProgressModel>().setDefaultValue();
 
   // List of Filename in the 📁 App Directory
   List<String> pdfFileNameAlreadyInDir = (await Utils.getFilePathListFromDir())
@@ -74,13 +84,17 @@ void recievePDF({
 
   // 🗨️ SnackBar, if sharedFiles != []
   if (sharedFiles.length > 0) {
-    // 📝 Setting isImporting to 1️⃣ true
-    // Will show 🌀 CircularProgressIndicator() on FAB
-    updateIsImporting(true);
+    // 📝 Set Total Values = Total No of Files user Selected
+    context.read<ProgressModel>().updateTotalValue(sharedFiles.length);
+
+    // 🗨️ Showing File is Importing Message
     showSnackBar(context, kImportingFilesMessage, key);
   }
 
   for (SharedMediaFile sharedFile in sharedFiles) {
+    // ➕ Updating the progress of Current Value by 1
+    context.read<ProgressModel>().currentValueIncrement();
+
     // 📄 [pdfFile]
     File pdfFile = File(sharedFile.path);
 
@@ -94,30 +108,37 @@ void recievePDF({
       countExistFiles++;
       continue;
     } else {
-      // ⛔ Handing Error
-      try {
-        // ⚙️ Generating [pdfModel] for [pdfFile]
-        PDFModel pdfModel =
-            await PdfUtils.getPdfModelOfFile(pdfFile, pdfFileNameAlreadyInDir);
-        print(pdfModel.toString());
-
+      // // ⛔ Handing Error
+      // try {
+      // ⚙️ Generating [pdfModel] for [pdfFile]
+      PDFModel pdfModel =
+          await PdfUtils.getPdfModelOfFile(pdfFile, pdfFileNameAlreadyInDir);
+      print(pdfModel.toString());
+      if (pdfModel.path != 'null') {
         // 📥 Saving [pdfModel] in 🗄️ Database
         dbHelper.savePdf(pdfModel);
         countNewFiles++;
-
-        // ➕ Updating [item]
-        context.read<PDFItemModel>().updateItem(await Utils.getPDFDataFromDB());
-      } catch (e) {
-        print("Error While Importing: ${e.toString()}");
+      } else {
         countCorrupt++;
-        continue;
       }
+
+      // ➕ Updating [item]
+      context.read<PDFItemModel>().updateItem(await Utils.getPDFDataFromDB());
+      // } catch (e) {
+      //   print("Error While Importing: ${e.toString()}");
+      //   countCorrupt++;
+      //   continue;
+      // }
     }
   }
 
   // 📝 Setting isImporting to 1️⃣ true
   // Will show ➕ on FAB
   updateIsImporting(false);
+
+  // 📝 Setting Default Value of Current & Total
+  // For Progress
+  context.read<ProgressModel>().setDefaultValue();
 
   // if sharedFiles != [], means user have shared some files
   if (sharedFiles.length > 0) {
