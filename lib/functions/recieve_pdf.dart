@@ -37,9 +37,9 @@ void recievePDF({
   required GlobalKey<ScaffoldMessengerState> key,
   required Function updateIsImporting,
 }) async {
-  // 📝 Setting isImporting to 1️⃣ true
-  // Will show 🌀 CircularProgressIndicator() on FAB
-  updateIsImporting(true);
+  // // 📝 Setting isImporting to 1️⃣ true
+  // // Will show 🌀 CircularProgressIndicator() on FAB
+  // updateIsImporting(true);
 
   Future.delayed(Duration(seconds: 1));
 
@@ -84,6 +84,10 @@ void recievePDF({
 
   // 🗨️ SnackBar, if sharedFiles != []
   if (sharedFiles.length > 0) {
+      // 📝 Setting isImporting to 1️⃣ true
+      // Will show 🌀 CircularProgressIndicator() on FAB
+      updateIsImporting(true);
+
     // 📝 Set Total Values = Total No of Files user Selected
     context.read<ProgressModel>().updateTotalValue(sharedFiles.length);
 

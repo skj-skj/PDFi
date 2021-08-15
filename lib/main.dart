@@ -121,6 +121,7 @@ class _HomeState extends State<Home> {
                             child: ElevatedButton(
                               onPressed: () async {
                                 requestStoragePermission();
+                                updateIsImporting(false);
                               },
                               child: Text(kGivePermissionText),
                             ),
@@ -260,6 +261,7 @@ class _HomeState extends State<Home> {
                   showSnackBar(
                       context, "$kGivePermissionTextFAB", _messengerKey);
                   requestStoragePermission();
+                  updateIsImporting(false);
                 }
                 FilePicker.platform.clearTemporaryFiles();
               },
