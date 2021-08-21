@@ -11,13 +11,13 @@ import 'package:provider/provider.dart';
 // 🌎 Project imports:
 import 'package:pdf_indexing/constants.dart';
 import 'package:pdf_indexing/functions/db_helper.dart';
-import 'package:pdf_indexing/functions/pdfUtils.dart' as PdfUtils;
-import 'package:pdf_indexing/functions/recieve_pdf.dart';
+import 'package:pdf_indexing/functions/docUtils.dart' as DOCUtils;
+import 'package:pdf_indexing/functions/recieve_doc.dart';
 import 'package:pdf_indexing/functions/request_permission.dart' as reqP;
 import 'package:pdf_indexing/functions/snackbar.dart';
 import 'package:pdf_indexing/functions/utils.dart' as Utils;
-import 'package:pdf_indexing/model/pdfItemModel.dart';
-import 'package:pdf_indexing/model/pdfModel.dart';
+import 'package:pdf_indexing/model/doc_item_model.dart';
+import 'package:pdf_indexing/model/doc_model.dart';
 import 'package:pdf_indexing/model/progress_model.dart';
 import 'package:pdf_indexing/widgets/action_buttons.dart';
 import 'package:pdf_indexing/widgets/search_widget.dart';
@@ -27,7 +27,7 @@ void main() {
     /// ✅ Implementation of Provider State Management
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (context) => PDFItemModel()),
+        ChangeNotifierProvider(create: (context) => DOCItemModel()),
         ChangeNotifierProvider(create: (context) => ProgressModel()),
       ],
       child: Home(),
@@ -66,7 +66,7 @@ class _HomeState extends State<Home> {
   /// set to false at first
   bool storagePermissionStatus = false;
 
-  /// is App is currently importing pdf
+  /// is App is currently importing documents
   ///
   ///   - true = show 🌀 CircularProgressIndicator() on FAB
   ///   - false = show ➕ on FAB
@@ -102,13 +102,13 @@ class _HomeState extends State<Home> {
                   children: [
                     SearchWidget(),
                     (storagePermissionStatus)
-                        ? Consumer<PDFItemModel>(
-                            builder: (context, pdfItem, child) {
+                        ? Consumer<DOCItemModel>(
+                            builder: (context, docItem, child) {
                               return Wrap(
                                 children:
-                                    (context.read<PDFItemModel>().items.length >
+                                    (context.read<DOCItemModel>().items.length >
                                             0)
-                                        ? context.read<PDFItemModel>().items
+                                        ? context.read<DOCItemModel>().items
                                         : [
                                             Center(
                                               child: Text(kDatabaseEmptyText),
@@ -137,14 +137,14 @@ class _HomeState extends State<Home> {
               onPressed: () async {
                 // 🤔 Checking if Storage permission given or not
                 if (storagePermissionStatus) {
-                  // 🤔 Checking if Currently App is Imporing pdf files or not
+                  // 🤔 Checking if Currently App is Imporing documents files or not
                   if (!isImporting) {
                     // updating [isImporting] to 1️⃣ true
                     // showing 🌀 CircularProgressIndicator() on FAB
                     updateIsImporting(true);
 
                     // List of Filename in the 📁 App Directory
-                    List<String> pdfFileNameAlreadyInDir =
+                    List<String> docFileNameAlreadyInDir =
                         (await Utils.getFilePathListFromDir())
                             .map((path) => Utils.getFileNameFromPath(path))
                             .toList();
@@ -159,49 +159,49 @@ class _HomeState extends State<Home> {
                         countExistFiles = 0,
                         countCorrupt = 0;
 
-                    // [📄], List of All PDF files picked by the user
-                    List<File>? pdfFiles = await PdfUtils.pickPDFFiles();
+                    // [📄], List of All Documents files picked by the user
+                    List<File>? docFiles = await DOCUtils.pickDOCFiles();
 
                     // 📝 Setting Default Value of Current & Total
                     // For Progress
                     context.read<ProgressModel>().setDefaultValue();
 
-                    if (pdfFiles != null) {
+                    if (docFiles != null) {
                       // 📝 Set Total Values = Total No of Files user Selected
                       context
                           .read<ProgressModel>()
-                          .updateTotalValue(pdfFiles.length);
+                          .updateTotalValue(docFiles.length);
 
                       // 🗨️ Showing File is Importing Message
                       showSnackBar(
                           context, kImportingFilesMessage, _messengerKey);
 
-                      for (File pdfFile in pdfFiles) {
+                      for (File docFile in docFiles) {
                         // ➕ Updating the progress of Current Value by 1
                         context.read<ProgressModel>().currentValueIncrement();
 
-                        // 🤔 Checking if the [pdfFile] #️⃣ Already Exist in 🗄️ Database or not
-                        if (await Utils.isHashExists(pdfFile)) {
+                        // 🤔 Checking if the [docFile] #️⃣ Already Exist in 🗄️ Database or not
+                        if (await Utils.isHashExists(docFile)) {
                           countExistFiles++;
                           continue;
                         } else {
                           try {
-                            // ⚙️ Generating [pdfModel] for [pdfFile]
-                            PDFModel pdfModel =
-                                await PdfUtils.getPdfModelOfFile(
-                                    pdfFile, pdfFileNameAlreadyInDir);
-                            // 🤔 Checking if the pdfModel is not Null Model
-                            if (pdfModel.path != 'null') {
-                              // 📥 Saving [pdfModel] in 🗄️ Database
-                              dbHelper.savePdf(pdfModel);
+                            // ⚙️ Generating [docModel] for [docFile]
+                            DOCModel docModel =
+                                await DOCUtils.getDOCModelOfFile(
+                                    docFile, docFileNameAlreadyInDir);
+                            // 🤔 Checking if the [docModel] is not Null Model
+                            if (docModel.path != 'null') {
+                              // 📥 Saving [docModel] in 🗄️ Database
+                              dbHelper.saveDOC(docModel);
                               countNewFiles++;
                             } else {
                               countCorrupt++;
                             }
                             // ➕ Updating [item]
                             context
-                                .read<PDFItemModel>()
-                                .updateItem(await Utils.getPDFDataFromDB());
+                                .read<DOCItemModel>()
+                                .updateItem(await Utils.getDOCDataFromDB());
 
                             // if (dbIsEmpty) {
                             //   setState(() {
@@ -312,10 +312,11 @@ class _HomeState extends State<Home> {
     super.initState();
     Utils.createFolderIfNotExist();
     setstoragePermissionStatus();
-    recievePDF(
+    recieveDOC(
         context: context,
         key: _messengerKey,
         updateIsImporting: updateIsImporting);
+    updateSQLDatabase();
   }
 
   /// 🤝 Handles 🔙🔙 Double Back to Exit
@@ -366,5 +367,10 @@ class _HomeState extends State<Home> {
     setState(() {
       isImporting = value;
     });
+  }
+
+  void updateSQLDatabase(){
+    DBHelper dbH = DBHelper();
+    dbH.getTableNames();
   }
 }

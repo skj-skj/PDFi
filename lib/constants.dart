@@ -5,29 +5,40 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 
 // 🌎 Project imports:
-import 'package:pdf_indexing/model/pdfModel.dart';
+import 'package:pdf_indexing/model/doc_model.dart';
 
 /// 🔠🗨️, already in 🗄️ db text
 String kAlreadyInDB = "already in the database";
 
 ///🔠, 📱 App Title
-String kAppTitle = "PDF Indexing";
+String kAppTitle = "PDFi";
 
 /// ➕ Create Table Query
 String kCreateTableQuery = '''
-    CREATE TABLE $kPdfTableName (
+    CREATE TABLE $kDOCTableName (
 	    filename TEXT PRIMARY KEY,
       path TEXT,
       thumb BLOB,
-  	  pdfText TEXT,
+  	  docText TEXT,
   	  tags TEXT,
       hash TEXT,
       folder TEXT
     )
     ''';
 
-/// , 🗄️ Database is Empty Message
-String kDatabaseEmptyText = "No Files Found, Click on + to import PDF files";
+/// 🔠 , 🗄️ Database is Empty Message
+String kDatabaseEmptyText = "No Files Found, Click on + to import Documents";
+
+/// 🔠 , 🎲 PDF MimeType
+String kPDFMimeType = 'application/pdf';
+
+/// 🔠 , 🎲 Spread Sheet MimeType
+List<String> kSpreadSheetTypes = [
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'application/vnd.ms-excel.sheet.binary.macroEnabled.12',
+  'application/vnd.ms-excel',
+  'application/vnd.ms-excel.sheet.macroEnabled.12'
+];
 
 /// 🔠, 🗄️ Database file Name
 String kDBFileName = "data.db";
@@ -53,10 +64,10 @@ String kImportingFilesMessage = "Importing Files, Please Wait";
 /// 💄 TextStyle for [Item]
 TextStyle kItemWidgetTextStyle = TextStyle(fontSize: 12);
 
-/// Null [PDFModel], when pdf file is failed to saved in app 📁 directory this is used
-PDFModel kNullPDFModel = PDFModel(
+/// Null [DOCModel], when documents file is failed to saved in app 📁 directory this is used
+DOCModel kNullDOCModel = DOCModel(
   path: 'null',
-  pdfText: '',
+  docText: '',
   thumb: Uint8List(0),
   hash: '',
   folder: '',
@@ -69,8 +80,8 @@ String kPathAsc = "path ASC";
 /// 🔠, [path] Desending for SQLite
 String kPathDesc = "path DESC";
 
-/// 🔠, 'pdf_files' 📁 Directory name
-String kPdfFilesPath = "pdf_files";
+/// 🔠, 'doc_files' 📁 Directory name
+String kDOCFilesPath = "doc_files";
 
 /// 🔠, 🗄️ Database Table name
-String kPdfTableName = "pdf_table";
+String kDOCTableName = "doc_table";

@@ -6,12 +6,12 @@ import 'package:provider/provider.dart';
 
 // 🌎 Project imports:
 import 'package:pdf_indexing/functions/db_helper.dart';
-import 'package:pdf_indexing/model/pdfItemModel.dart';
+import 'package:pdf_indexing/model/doc_item_model.dart';
 
 /// 💄 Search Widget
 ///
 /// It is TextField Widget
-///   * onChange 🌀 Update the [item] of pdfItemModel 🧰
+///   * onChange 🌀 Update the [item] of [docItemModel] 🧰
 class SearchWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -24,13 +24,13 @@ class SearchWidget extends StatelessWidget {
 
           if (text == '') {
             context
-                .read<PDFItemModel>()
+                .read<DOCItemModel>()
                 .updateItem(await dbHelper.queryForAllfilePaths());
           }
 
           List<Map> dbResultItems =
               await dbHelper.queryForFilePathsWithCondition(text);
-          context.read<PDFItemModel>().updateItem(dbResultItems);
+          context.read<DOCItemModel>().updateItem(dbResultItems);
         },
         decoration: InputDecoration(
           border: OutlineInputBorder(),

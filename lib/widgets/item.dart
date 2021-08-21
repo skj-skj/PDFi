@@ -54,7 +54,7 @@ class Item extends StatelessWidget {
                 }
               },
 
-              /// 🖼️ Thumbnail of the PDF
+              /// 🖼️ Thumbnail of the Documents
               child: Thumbnail(
                 path: path,
                 thumb: thumb,

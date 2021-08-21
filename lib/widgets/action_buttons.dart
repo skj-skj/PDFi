@@ -6,7 +6,7 @@ import 'package:provider/provider.dart';
 
 // 🌎 Project imports:
 import 'package:pdf_indexing/functions/utils.dart' as Utils;
-import 'package:pdf_indexing/model/pdfItemModel.dart';
+import 'package:pdf_indexing/model/doc_item_model.dart';
 
 /// [💄]
 ///
@@ -19,7 +19,7 @@ List<Widget> actionButtons({required BuildContext context}) {
   IconButton refresh = IconButton(
     onPressed: () async {
       // ➕ Update [_items]
-      context.read<PDFItemModel>().updateItem(await Utils.getPDFDataFromDB());
+      context.read<DOCItemModel>().updateItem(await Utils.getDOCDataFromDB());
     },
     icon: Icon(Icons.refresh),
   );

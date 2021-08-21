@@ -5,11 +5,11 @@ import 'package:flutter/material.dart';
 import 'package:pdf_indexing/functions/db_helper.dart';
 import 'package:pdf_indexing/widgets/item.dart';
 
-/// 🧰🔁, [PDFItemModel] for State Management
+/// 🧰🔁, [DOCItemModel] for State Management
 ///
 /// items = [Item,]
 ///   - Items => 💄 Widget
-class PDFItemModel extends ChangeNotifier {
+class DOCItemModel extends ChangeNotifier {
   /// 🕵️ [_items], Stores [Items,]
   ///
   /// Items => 💄 Widget

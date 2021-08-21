@@ -12,15 +12,15 @@ import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 // 🌎 Project imports:
 import 'package:pdf_indexing/constants.dart';
 import 'package:pdf_indexing/functions/db_helper.dart';
-import 'package:pdf_indexing/functions/pdfUtils.dart' as PdfUtils;
+import 'package:pdf_indexing/functions/docUtils.dart' as DOCUtils;
 import 'package:pdf_indexing/functions/snackbar.dart';
 import 'package:pdf_indexing/functions/utils.dart' as Utils;
-import 'package:pdf_indexing/model/pdfItemModel.dart';
-import 'package:pdf_indexing/model/pdfModel.dart';
+import 'package:pdf_indexing/model/doc_item_model.dart';
+import 'package:pdf_indexing/model/doc_model.dart';
 import 'package:pdf_indexing/model/progress_model.dart';
 
-// it recieve pdf from other apps sharing intent
-/// 📲 recieve pdf File
+// it recieve doc from other apps sharing intent
+/// 📲 recieve dpc File
 ///
 /// From Other Apps, Like:
 ///   - 🗃️ File Manager
@@ -32,7 +32,7 @@ import 'package:pdf_indexing/model/progress_model.dart';
 /// Requires, BuildContext [context], [_messengerKey], Function [updateIsImporting]
 ///
 /// [updateIsImporting] is a callback to update the value of [isImporting] in the main.dart
-void recievePDF({
+void recieveDOC({
   required BuildContext context,
   required GlobalKey<ScaffoldMessengerState> key,
   required Function updateIsImporting,
@@ -51,11 +51,11 @@ void recievePDF({
 
   // 📟 [countNewFiles] count new files which are imported
   // 📟 [countExistFiles] count already existing files in 📁 App Directory
-  // 📟 [countNotPDFfiles] count files which are not pdf
+  // 📟 [countUnsupportedFiles] count files which are not Documents
   // 📟 [countCorrupt] count corrupt files which user selected
   int countNewFiles = 0,
       countExistFiles = 0,
-      countNotPDFfiles = 0,
+      countUnsupportedFiles = 0,
       countCorrupt = 0;
 
   try {
@@ -78,7 +78,7 @@ void recievePDF({
   context.read<ProgressModel>().setDefaultValue();
 
   // List of Filename in the 📁 App Directory
-  List<String> pdfFileNameAlreadyInDir = (await Utils.getFilePathListFromDir())
+  List<String> docFileNameAlreadyInDir = (await Utils.getFilePathListFromDir())
       .map((path) => Utils.getFileNameFromPath(path))
       .toList();
 
@@ -99,35 +99,35 @@ void recievePDF({
     // ➕ Updating the progress of Current Value by 1
     context.read<ProgressModel>().currentValueIncrement();
 
-    // 📄 [pdfFile]
-    File pdfFile = File(sharedFile.path);
+    // 📄 [docFile]
+    File docFile = File(sharedFile.path);
 
-    // 🤔 Checking [pdfFile] have .pdf extension
-    if (!Utils.isPDF(pdfFile.path)) {
-      countNotPDFfiles++;
+    // 🤔 Checking [docFile] is of type Documents
+    if (!Utils.isDOC(docFile.path)) {
+      countUnsupportedFiles++;
       continue;
     }
-    // 🤔 Checking if the [pdfFile] #️⃣ Already Exist in 🗄️ Database or not
-    if (await Utils.isHashExists(pdfFile)) {
+    // 🤔 Checking if the [docFile] #️⃣ Already Exist in 🗄️ Database or not
+    if (await Utils.isHashExists(docFile)) {
       countExistFiles++;
       continue;
     } else {
       // // ⛔ Handing Error
       // try {
-      // ⚙️ Generating [pdfModel] for [pdfFile]
-      PDFModel pdfModel =
-          await PdfUtils.getPdfModelOfFile(pdfFile, pdfFileNameAlreadyInDir);
-      print(pdfModel.toString());
-      if (pdfModel.path != 'null') {
-        // 📥 Saving [pdfModel] in 🗄️ Database
-        dbHelper.savePdf(pdfModel);
+      // ⚙️ Generating [docModel] for [docFile]
+      DOCModel docModel =
+          await DOCUtils.getDOCModelOfFile(docFile, docFileNameAlreadyInDir);
+      print(docModel.toString());
+      if (docModel.path != 'null') {
+        // 📥 Saving [docModel] in 🗄️ Database
+        dbHelper.saveDOC(docModel);
         countNewFiles++;
       } else {
         countCorrupt++;
       }
 
       // ➕ Updating [item]
-      context.read<PDFItemModel>().updateItem(await Utils.getPDFDataFromDB());
+      context.read<DOCItemModel>().updateItem(await Utils.getDOCDataFromDB());
       // } catch (e) {
       //   print("Error While Importing: ${e.toString()}");
       //   countCorrupt++;
@@ -160,11 +160,11 @@ void recievePDF({
         countExistFiles); // No File , 1 File, 2 Files, 3 Files etc.
     showSnackBar(context, "$text $kAlreadyInDB", key);
   }
-  if (countNotPDFfiles > 0) {
-    // 🗨️, Files are 🚫 pdf
+  if (countUnsupportedFiles > 0) {
+    // 🗨️, Files are 🚫 Supported
     String text = Utils.getFileOrFilesText(
-        countNotPDFfiles); // No File , 1 File, 2 Files, 3 Files etc.
-    showSnackBar(context, "$text are not PDF", key);
+        countUnsupportedFiles); // No File , 1 File, 2 Files, 3 Files etc.
+    showSnackBar(context, "$text are not Supported", key);
   }
   // if [countCorrupt] > 0
   // means some files which user selected are corrupt

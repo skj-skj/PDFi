@@ -8,7 +8,7 @@ import 'package:sqflite/sqflite.dart';
 // 🌎 Project imports:
 import 'package:pdf_indexing/constants.dart';
 import 'package:pdf_indexing/functions/utils.dart' as Utils;
-import 'package:pdf_indexing/model/pdfModel.dart';
+import 'package:pdf_indexing/model/doc_model.dart';
 
 /// 🗄️🛠️ Database Helper Class
 class DBHelper {
@@ -29,7 +29,7 @@ class DBHelper {
   void deleteFromFilename(String filename) async {
     Database? dbClient = await db;
     int rowsDeleted = await dbClient!
-        .delete(kPdfTableName, where: "filename = ?", whereArgs: [filename]);
+        .delete(kDOCTableName, where: "filename = ?", whereArgs: [filename]);
     print("$rowsDeleted Rows Deleted");
   }
 
@@ -37,7 +37,7 @@ class DBHelper {
   void deleteFromPath(String path) async {
     Database? dbClient = await db;
     int rowsDeleted = await dbClient!
-        .delete(kPdfTableName, where: "path = ?", whereArgs: [path]);
+        .delete(kDOCTableName, where: "path = ?", whereArgs: [path]);
     print("$rowsDeleted Rows Deleted");
   }
 
@@ -47,7 +47,7 @@ class DBHelper {
   Future<String> getFolder({required String path}) async {
     Database? dbClient = await db;
     List<Map> results = await dbClient!
-        .query(kPdfTableName, columns: ['folder'], where: "path = '$path'");
+        .query(kDOCTableName, columns: ['folder'], where: "path = '$path'");
     if (results.length > 0) {
       return results[0]['folder'];
     } else {
@@ -62,7 +62,7 @@ class DBHelper {
   Future<String> getSHA1HashDB({required String hash}) async {
     Database? dbClient = await db;
     List<Map> results = await dbClient!
-        .query(kPdfTableName, columns: ['hash'], where: "hash = '$hash'");
+        .query(kDOCTableName, columns: ['hash'], where: "hash = '$hash'");
     print(results);
     if (results.length > 0) {
       return results[0]['hash'];
@@ -77,7 +77,7 @@ class DBHelper {
   Future<String> getTags({required String path}) async {
     Database? dbClient = await db;
     List<Map> results = await dbClient!
-        .query(kPdfTableName, columns: ['tags'], where: "path = '$path'");
+        .query(kDOCTableName, columns: ['tags'], where: "path = '$path'");
     if (results.length > 0) {
       return results[0]['tags'];
     } else {
@@ -89,7 +89,7 @@ class DBHelper {
   Future<Uint8List?> getThumbnail(String path) async {
     Database? dbClient = await db;
     List<Map> results = await dbClient!
-        .query(kPdfTableName, columns: ['thumb'], where: "path = '$path");
+        .query(kDOCTableName, columns: ['thumb'], where: "path = '$path");
     if (results.length > 0) {
       return results[0]['thumb'];
     } else {
@@ -111,7 +111,7 @@ class DBHelper {
   Future<int> noOfRows() async {
     Database? dbClient = await db;
     List<Map> results =
-        await dbClient!.rawQuery("SELECT COUNT(*) FROM $kPdfTableName");
+        await dbClient!.rawQuery("SELECT COUNT(*) FROM $kDOCTableName");
     return results[0]["COUNT(*)"];
   }
 
@@ -121,18 +121,18 @@ class DBHelper {
   Future<List<Map>> queryForAllfilePaths() async {
     Database? dbClient = await db;
     return await dbClient!
-        .query(kPdfTableName, columns: ['path', 'thumb'], orderBy: kPathAsc);
+        .query(kDOCTableName, columns: ['path', 'thumb'], orderBy: kPathAsc);
   }
 
   /// ⏩[🗺️] Return [Map,]
   ///
   /// Return [path,thumb] from Rows
   ///
-  /// Where [pdfText,filename,tags] from 🗄️ Database Table contains 🔠 [text]
+  /// Where [docText,filename,tags] from 🗄️ Database Table contains 🔠 [text]
   Future<List<Map>> queryForFilePathsWithCondition(String text) async {
     Database? dbClient = await db;
     return await dbClient!.query(
-      kPdfTableName,
+      kDOCTableName,
       columns: ['path', 'thumb'],
       where: Utils.getWhereConditionForSearch(text),
       orderBy: kPathAsc,
@@ -143,23 +143,29 @@ class DBHelper {
   void saveFolder({required String path, required String folder}) async {
     Database? dbClient = await db;
     dbClient!
-        .update(kPdfTableName, {'folder': '$folder'}, where: "path = '$path'");
+        .update(kDOCTableName, {'folder': '$folder'}, where: "path = '$path'");
   }
 
-  /// 📥 Save [pdfModel] data in the 🗄️ Database
-  void savePdf(PDFModel pdfModel) async {
+  /// 📥 Save [docModel] data in the 🗄️ Database
+  void saveDOC(DOCModel docModel) async {
     Database? dbClient = await db;
-    dbClient!.insert(kPdfTableName, pdfModel.toMap());
+    dbClient!.insert(kDOCTableName, docModel.toMap());
   }
 
   /// 📥 Save [tags] data in the 🗄️ Database
   void saveTags({required String path, required String tags}) async {
     Database? dbClient = await db;
-    dbClient!.update(kPdfTableName, {'tags': '$tags'}, where: "path = '$path'");
+    dbClient!.update(kDOCTableName, {'tags': '$tags'}, where: "path = '$path'");
   }
 
   /// ➕ Create 🗄️ Database Table if not Created
   void _onCreate(Database db, int version) async {
     await db.execute(kCreateTableQuery);
+  }
+
+  Future<void> getTableNames() async {
+    Database? dbClient = await db;
+    List<Map> result = await dbClient!.rawQuery("SELECT * FROM sqlite_master");
+    print(result);
   }
 }

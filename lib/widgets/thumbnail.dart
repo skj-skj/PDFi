@@ -9,12 +9,12 @@ import 'package:flutter/material.dart';
 class Thumbnail extends StatelessWidget {
   /// 🔠 [path]
   ///
-  /// path of the [pdfFile]
+  /// path of the [docFile]
   final path;
 
   /// 🖼️ [thumb]
   ///
-  /// thumbnail image of [pdfFile]
+  /// thumbnail image of [docFile]
   final thumb;
 
   /// 📟 Image Size

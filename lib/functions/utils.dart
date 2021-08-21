@@ -3,6 +3,7 @@ import 'dart:io';
 
 // 📦 Package imports:
 import 'package:crypto/crypto.dart';
+import 'package:mime/mime.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -10,12 +11,12 @@ import 'package:path_provider/path_provider.dart';
 import 'package:pdf_indexing/constants.dart';
 import 'package:pdf_indexing/functions/db_helper.dart';
 
-/// ➕ Create 'pdf_files' Folder if not exist
+/// ➕ Create 'doc_files' Folder if not exist
 void createFolderIfNotExist() async {
   String storagePath = await getStoragePath();
-  Directory pdfFilesDir = Directory(join(storagePath, kPdfFilesPath));
-  if (!pdfFilesDir.existsSync()) {
-    await pdfFilesDir.create(recursive: true);
+  Directory docFilesDir = Directory(join(storagePath, kDOCFilesPath));
+  if (!docFilesDir.existsSync()) {
+    await docFilesDir.create(recursive: true);
   }
 }
 
@@ -35,7 +36,7 @@ void deleteCache() async {
   }
 }
 
-/// 🗑️ Delete Specific File according to [path] from 'pdf_files' 📁 Directory
+/// 🗑️ Delete Specific File according to [path] from 'doc_files' 📁 Directory
 void deleteFromDir(String path) {
   try {
     File file = File(path);
@@ -85,22 +86,26 @@ Future<List<String>> getFilePathListFromDB() async {
   List<String> filePaths = [];
   for (Map dbEntry in dbResult) {
     String filePath = dbEntry['path'];
-    if (isPDF(filePath)) {
-      filePaths.add(dbEntry['path']);
-    }
+      filePaths.add(filePath);
+    
   }
   return filePaths;
+}
+
+/// Return true is the file is of type Documents (pdf,xls,xlsx)
+bool isDOC(String path){
+  return (isPDF(path) || isSpreadSheet(path));
 }
 
 /// ⏩ [🔡] Return Future [String,] containg path of files from 📁 Directory
 Future<List<String>> getFilePathListFromDir() async {
   String storagePath = await getStoragePath();
-  Directory pdfFilesDir = Directory(join(storagePath, kPdfFilesPath));
-  List<FileSystemEntity> files = pdfFilesDir.listSync();
-  //Map file to file.path and filter using where method if the file is PDF
+  Directory docFilesDir = Directory(join(storagePath, kDOCFilesPath));
+  List<FileSystemEntity> files = docFilesDir.listSync();
+  //Map file to file.path and filter using where method if the file is Documents
   List<String> filePaths = files
       .map((file) => file.path)
-      .where((filePath) => isPDF(filePath))
+      .where((filePath) => isDOC(filePath))
       .toList();
   return filePaths;
 }
@@ -108,7 +113,7 @@ Future<List<String>> getFilePathListFromDir() async {
 /// [🗺️], Return [Map] from 🗄️ Database
 ///
 /// Contains ['path','thumb'] Column
-Future<List<Map>> getPDFDataFromDB() {
+Future<List<Map>> getDOCDataFromDB() {
   DBHelper dbH = DBHelper();
   return dbH.queryForAllfilePaths();
 }
@@ -128,7 +133,7 @@ Future<String> getStoragePath() async {
 
 /// 🔠 Returns String, containig ⚙️ Generated SQLite Where Condition
 String getWhereConditionForSearch(String text) {
-  return "pdfText LIKE '%$text%' OR filename LIKE '%$text%' OR tags LIKE '%$text%'";
+  return "docText LIKE '%$text%' OR filename LIKE '%$text%' OR tags LIKE '%$text%'";
 }
 
 /// 0️⃣/1️⃣ Returns bool, of is [filePath] exist in 📁 Directory or not
@@ -151,9 +156,16 @@ Future<bool> isHashExists(File file) async {
 
 /// 0️⃣/1️⃣ Returns bool, is [path] have pdf extension or not
 bool isPDF(String path) {
-  if (path.split('.').last.toLowerCase() == "pdf") {
-    return true;
-  } else {
-    return false;
-  }
+  return kPDFMimeType == lookupMimeType(path).toString();
+  // if (path.split('.').last.toLowerCase() == "pdf") {
+  //   return true;
+  // } else {
+  //   return false;
+  // }
+}
+
+/// Is the File is SpreadSheet or no
+bool isSpreadSheet(String path){
+  print("${lookupMimeType(path).toString()} ${kSpreadSheetTypes.contains(lookupMimeType(path).toString())}");
+  return kSpreadSheetTypes.contains(lookupMimeType(path).toString());
 }

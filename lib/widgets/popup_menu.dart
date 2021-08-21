@@ -8,7 +8,7 @@ import 'package:provider/provider.dart';
 import 'package:pdf_indexing/constants.dart';
 import 'package:pdf_indexing/functions/db_helper.dart';
 import 'package:pdf_indexing/functions/utils.dart' as Utils;
-import 'package:pdf_indexing/model/pdfItemModel.dart';
+import 'package:pdf_indexing/model/doc_item_model.dart';
 
 /// 💄🔘 Cancel Button
 TextButton cancelButton({required BuildContext context}) {
@@ -28,7 +28,7 @@ void deleteButtonOnYes({
 }) {
   dbHelper.deleteFromPath(path);
   Utils.deleteFromDir(path);
-  context.read<PDFItemModel>().deleteItems(path);
+  context.read<DOCItemModel>().deleteItems(path);
   Navigator.pop(context);
 }
 
