@@ -43,8 +43,11 @@ List<String> kSpreadSheetTypes = [
 /// 🔠, 🗄️ Database file Name
 String kDBFileName = "data.db";
 
-/// 🔠, 🌐 URL of 'no_file_found.png'
-String kFileNotFoundImage = "assets/images/no_file_found.png";
+/// 🔠, 🌐 URI of 'file_error.png'
+String kFileErrorImage = "assets/images/file_error.png";
+
+/// 🔠, 🌐 URI of 'xlsx_icon.png'
+String kXLSXFileIcon = "assets/images/xlsx_icon.png";
 
 /// 🔠, 🙏 Give Permission Text
 String kGivePermissionText = "Click Here to Give Permission";
@@ -85,3 +88,15 @@ String kDOCFilesPath = "doc_files";
 
 /// 🔠, 🗄️ Database Table name
 String kDOCTableName = "doc_table";
+
+/// 🗺️, Map of Image URI with their Documents Type
+Map<String, String> assetMap = {
+  'file_error': kFileErrorImage,
+  'xlsx': kXLSXFileIcon,
+};
+
+/// Uint8List Representation of 'file_error.png' image
+Uint8List kFileErrorUint8List = Uint8List.fromList([0]);
+
+/// Uint8List Representation of 'xlsx_icon.png' image
+Uint8List kXLSXUint8List = Uint8List.fromList([1]);

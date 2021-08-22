@@ -86,14 +86,13 @@ Future<List<String>> getFilePathListFromDB() async {
   List<String> filePaths = [];
   for (Map dbEntry in dbResult) {
     String filePath = dbEntry['path'];
-      filePaths.add(filePath);
-    
+    filePaths.add(filePath);
   }
   return filePaths;
 }
 
 /// Return true is the file is of type Documents (pdf,xls,xlsx)
-bool isDOC(String path){
+bool isDOC(String path) {
   return (isPDF(path) || isSpreadSheet(path));
 }
 
@@ -108,6 +107,20 @@ Future<List<String>> getFilePathListFromDir() async {
       .where((filePath) => isDOC(filePath))
       .toList();
   return filePaths;
+}
+
+/// ⚙️🔠, Generate String of Column Names seperated by ','
+///
+/// with or without bracket
+///   - Use [withBrackert] : true/false
+String genColStringForQuery(List<String> colNames,
+    {required bool withBracket}) {
+  String colString = colNames.toString();
+  String colStringWithoutBracket = colString.substring(1, colString.length - 1);
+  if (withBracket) {
+    return '(' + colStringWithoutBracket + ')';
+  }
+  return colStringWithoutBracket;
 }
 
 /// [🗺️], Return [Map] from 🗄️ Database
@@ -157,15 +170,11 @@ Future<bool> isHashExists(File file) async {
 /// 0️⃣/1️⃣ Returns bool, is [path] have pdf extension or not
 bool isPDF(String path) {
   return kPDFMimeType == lookupMimeType(path).toString();
-  // if (path.split('.').last.toLowerCase() == "pdf") {
-  //   return true;
-  // } else {
-  //   return false;
-  // }
 }
 
 /// Is the File is SpreadSheet or no
-bool isSpreadSheet(String path){
-  print("${lookupMimeType(path).toString()} ${kSpreadSheetTypes.contains(lookupMimeType(path).toString())}");
+bool isSpreadSheet(String path) {
+  print(
+      "${lookupMimeType(path).toString()} ${kSpreadSheetTypes.contains(lookupMimeType(path).toString())}");
   return kSpreadSheetTypes.contains(lookupMimeType(path).toString());
 }

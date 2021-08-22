@@ -70,6 +70,7 @@ class DOCModel {
   }
 }
 
-extension on String{
+extension on String {
+  /// to remove 🔥👾 long spaces in the text
   String removeLongSpace() => this.replaceAll(RegExp('\\s+'), ' ');
 }

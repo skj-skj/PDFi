@@ -1,5 +1,13 @@
+// 🎯 Dart imports:
+import 'dart:typed_data';
+
 // 🐦 Flutter imports:
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+
+// 🌎 Project imports:
+import 'package:pdf_indexing/constants.dart';
+import 'package:pdf_indexing/functions/loaded_assets.dart';
 
 /// 🖼️ Shows Thumbnail
 ///
@@ -15,7 +23,7 @@ class Thumbnail extends StatelessWidget {
   /// 🖼️ [thumb]
   ///
   /// thumbnail image of [docFile]
-  final thumb;
+  final Uint8List thumb;
 
   /// 📟 Image Size
   final double itemImageSize;
@@ -26,12 +34,26 @@ class Thumbnail extends StatelessWidget {
     required this.itemImageSize,
   });
 
+  /// ⚙️🤔🖼️, return thumnail data
+  ///
+  /// if file is corrupt or xlsx  return fileError or xlsx image data
+  ///
+  /// if file is pdf and have thumbnail data saved in 🗄️ Database, [thumb] will be returned
+  Uint8List genThumb() {
+    if (listEquals(thumb, kFileErrorUint8List)) {
+      return LoadedAssets.fileError;
+    } else if (listEquals(thumb, kXLSXUint8List)) {
+      return LoadedAssets.xlsx;
+    }
+    return thumb;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Center(
       key: Key(path),
       child: Image.memory(
-        thumb,
+        genThumb(),
         fit: BoxFit.fitWidth,
         width: itemImageSize - 25,
         height: itemImageSize - 25,

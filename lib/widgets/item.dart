@@ -38,6 +38,7 @@ class Item extends StatelessWidget {
               child: Text(
                 Utils.getFileNameFromPath(path),
                 style: kItemWidgetTextStyle,
+                textAlign: TextAlign.center,
               ),
             ),
 

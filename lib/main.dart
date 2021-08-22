@@ -12,6 +12,7 @@ import 'package:provider/provider.dart';
 import 'package:pdf_indexing/constants.dart';
 import 'package:pdf_indexing/functions/db_helper.dart';
 import 'package:pdf_indexing/functions/docUtils.dart' as DOCUtils;
+import 'package:pdf_indexing/functions/loaded_assets.dart';
 import 'package:pdf_indexing/functions/recieve_doc.dart';
 import 'package:pdf_indexing/functions/request_permission.dart' as reqP;
 import 'package:pdf_indexing/functions/snackbar.dart';
@@ -97,39 +98,50 @@ class _HomeState extends State<Home> {
             body: WillPopScope(
               // 🤝 Handle 🔙🔙 Double Back to Exit
               onWillPop: onWillPop,
-              child: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    SearchWidget(),
-                    (storagePermissionStatus)
-                        ? Consumer<DOCItemModel>(
-                            builder: (context, docItem, child) {
-                              return Wrap(
-                                children:
-                                    (context.read<DOCItemModel>().items.length >
-                                            0)
-                                        ? context.read<DOCItemModel>().items
-                                        : [
-                                            Center(
-                                              child: Text(kDatabaseEmptyText),
-                                            )
-                                          ],
-                              );
+
+              // Refresh Indicator, pull down to refresh
+              child: RefreshIndicator(
+                onRefresh: () async {
+                  // ➕ Update [_items]
+                  context
+                      .read<DOCItemModel>()
+                      .updateItem(await Utils.getDOCDataFromDB());
+                },
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      SearchWidget(),
+                      if (storagePermissionStatus)
+                        Consumer<DOCItemModel>(
+                          builder: (context, docItem, child) {
+                            return Wrap(
+                              children:
+                                  (context.read<DOCItemModel>().items.length >
+                                          0)
+                                      ? context.read<DOCItemModel>().items
+                                      : [
+                                          Center(
+                                            child: Text(kDatabaseEmptyText),
+                                          )
+                                        ],
+                            );
+                          },
+                        )
+                      else
+                        Center(
+                          child: ElevatedButton(
+                            onPressed: () async {
+                              requestStoragePermission();
+                              updateIsImporting(false);
                             },
-                          )
-                        : Center(
-                            child: ElevatedButton(
-                              onPressed: () async {
-                                requestStoragePermission();
-                                updateIsImporting(false);
-                              },
-                              child: Text(kGivePermissionText),
-                            ),
+                            child: Text(kGivePermissionText),
                           ),
-                    SizedBox(
-                      height: 60,
-                    )
-                  ],
+                        ),
+                      SizedBox(
+                        height: 60,
+                      )
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -202,12 +214,6 @@ class _HomeState extends State<Home> {
                             context
                                 .read<DOCItemModel>()
                                 .updateItem(await Utils.getDOCDataFromDB());
-
-                            // if (dbIsEmpty) {
-                            //   setState(() {
-                            //     dbIsEmpty = false;
-                            //   });
-                            // }
                           } catch (e) {
                             print("Error While Importing: ${e.toString()}");
                             countCorrupt++;
@@ -312,11 +318,12 @@ class _HomeState extends State<Home> {
     super.initState();
     Utils.createFolderIfNotExist();
     setstoragePermissionStatus();
+    LoadedAssets.load();
+    updateSQLDatabase();
     recieveDOC(
         context: context,
         key: _messengerKey,
         updateIsImporting: updateIsImporting);
-    updateSQLDatabase();
   }
 
   /// 🤝 Handles 🔙🔙 Double Back to Exit
@@ -369,8 +376,20 @@ class _HomeState extends State<Home> {
     });
   }
 
-  void updateSQLDatabase(){
+  /// ➕♻️, Update SQL 🗄️ Database
+  ///
+  /// migrating data from old table to new table
+  void updateSQLDatabase() async {
     DBHelper dbH = DBHelper();
-    dbH.getTableNames();
+    await dbH.creatDOCTable();
+    List<String> tables = await dbH.getTableNames();
+    if (tables.length > 1) {
+      String oldTableName =
+          tables.where((element) => element != kDOCFilesPath).toList()[0];
+      await dbH.cloneTable(srcTable: oldTableName, destTable: kDOCTableName);
+      await dbH.dropTable(oldTableName);
+      // ➕ Update [_items]
+      context.read<DOCItemModel>().updateItem(await Utils.getDOCDataFromDB());
+    }
   }
 }

@@ -37,10 +37,6 @@ void recieveDOC({
   required GlobalKey<ScaffoldMessengerState> key,
   required Function updateIsImporting,
 }) async {
-  // // 📝 Setting isImporting to 1️⃣ true
-  // // Will show 🌀 CircularProgressIndicator() on FAB
-  // updateIsImporting(true);
-
   Future.delayed(Duration(seconds: 1));
 
   // 🗄️ Database Helper
@@ -84,9 +80,9 @@ void recieveDOC({
 
   // 🗨️ SnackBar, if sharedFiles != []
   if (sharedFiles.length > 0) {
-      // 📝 Setting isImporting to 1️⃣ true
-      // Will show 🌀 CircularProgressIndicator() on FAB
-      updateIsImporting(true);
+    // 📝 Setting isImporting to 1️⃣ true
+    // Will show 🌀 CircularProgressIndicator() on FAB
+    updateIsImporting(true);
 
     // 📝 Set Total Values = Total No of Files user Selected
     context.read<ProgressModel>().updateTotalValue(sharedFiles.length);
@@ -112,8 +108,6 @@ void recieveDOC({
       countExistFiles++;
       continue;
     } else {
-      // // ⛔ Handing Error
-      // try {
       // ⚙️ Generating [docModel] for [docFile]
       DOCModel docModel =
           await DOCUtils.getDOCModelOfFile(docFile, docFileNameAlreadyInDir);
@@ -128,11 +122,6 @@ void recieveDOC({
 
       // ➕ Updating [item]
       context.read<DOCItemModel>().updateItem(await Utils.getDOCDataFromDB());
-      // } catch (e) {
-      //   print("Error While Importing: ${e.toString()}");
-      //   countCorrupt++;
-      //   continue;
-      // }
     }
   }
 

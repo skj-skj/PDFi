@@ -2,9 +2,6 @@
 import 'dart:io';
 import 'dart:typed_data';
 
-// 🐦 Flutter imports:
-import 'package:flutter/services.dart';
-
 // 📦 Package imports:
 import 'package:file_picker/file_picker.dart';
 import 'package:native_pdf_renderer/native_pdf_renderer.dart';
@@ -103,7 +100,6 @@ Future<List<File>?> pickDOCFiles() async {
 }
 
 /// 🔠, Generate Text Function
-/// TODO: Implement Text Genration for Spread Sheet
 Future<String> extractText(File file) async {
   try {
     if (Utils.isPDF(file.path)) {
@@ -118,28 +114,29 @@ Future<String> extractText(File file) async {
       List<String> sheets = decoder.tables.keys.toList();
       String text = '';
       sheets.forEach((sheet) {
-        int rows = decoder.tables[sheet]!.maxRows;
-        int cols = decoder.tables[sheet]!.maxCols;
+        // int rows = decoder.tables[sheet]!.maxRows;
+        // int cols = decoder.tables[sheet]!.maxCols;
         decoder.tables[sheet]!.rows.forEach((row) {
+          row = row.where((element) => element != null).toList();
           text += "${row.join(' ')}\n";
         });
       });
       return text;
-    } else {
-      return '';
     }
   } catch (e) {
-    /// ❗✖️ if faild to Extract text
-    /// returns '' (Empty String)
-    return '';
+    print("Error while Extracting Text");
   }
+
+  /// ❗✖️ if faild to Extract text
+  /// returns '' (Empty String)
+  return '';
 }
 
 /// 📤🖼️ Extract Thumbnail of Documents
 /// TODO: Implement Thumbail Genration for Spread Sheet
 Future<Uint8List> extractThumb(File file) async {
-  if (Utils.isPDF(file.path)) {
-    try {
+  try {
+    if (Utils.isPDF(file.path)) {
       /// 📤 Extracting Thumbnail Image from [docSavedFile], at page 1
       ///
       /// JPEG Format
@@ -151,16 +148,19 @@ Future<Uint8List> extractThumb(File file) async {
         format: PdfPageFormat.JPEG,
       );
       return pageThumbImage!.bytes;
-    } catch (e) {
-      /// ❗✖️ If faild to Extract 🖼️ Thumbnail,
-      /// Thumbnail of "no_file_found.png" will be saved in thumb
-      return (await rootBundle.load('assets/images/no_file_found.png'))
-          .buffer
-          .asUint8List();
+    } else if (Utils.isSpreadSheet(file.path)) {
+      /// If file is spread sheet or xlsx
+      ///
+      /// Returns Uint8List representation of 'xlsx_icon.png'
+      return kXLSXUint8List;
     }
-  } else {
-    return (await rootBundle.load('assets/images/no_file_found.png'))
-        .buffer
-        .asUint8List();
+  } catch (e) {
+    print("Error While Generating Thumbnail");
+    print(e);
   }
+
+  /// ❗✖️ If faild to Extract 🖼️ Thumbnail,
+  ///
+  /// Returns Uint8List representation of 'file_error.png'
+  return kFileErrorUint8List;
 }

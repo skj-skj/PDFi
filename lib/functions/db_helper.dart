@@ -163,9 +163,74 @@ class DBHelper {
     await db.execute(kCreateTableQuery);
   }
 
-  Future<void> getTableNames() async {
+  /// [🔠], Return List of Table Names from the 🗄️ Database
+  Future<List<String>> getTableNames() async {
     Database? dbClient = await db;
-    List<Map> result = await dbClient!.rawQuery("SELECT * FROM sqlite_master");
-    print(result);
+    List<Map> result = await dbClient!.rawQuery('''
+    SELECT name FROM sqlite_master 
+    WHERE type = 'table' AND 
+    name NOT LIKE 'sqlite_%' AND 
+    name LIKE '%table%'
+    ''');
+
+    List<String> tableNames = result.map((e) => e['name'].toString()).toList();
+    return tableNames;
+  }
+
+  /// [🔠], Return List of Column names of the Table
+  Future<List<String>> getTableColumn(String tableName) async {
+    Database? dbClient = await db;
+    List<Map> results = await dbClient!.rawQuery('''
+      PRAGMA table_info($tableName)
+    ''');
+    List<String> colNames = results.map((e) => e['name'].toString()).toList();
+    return colNames;
+  }
+
+  /// 🗄️➡️🗄️, Clone data of one table to another
+  ///
+  /// Schema of both tables must be same
+  Future<void> cloneTable(
+      {required String srcTable, required String destTable}) async {
+    List<String> srcTableCol = await getTableColumn(srcTable);
+    List<String> destTableCol = await getTableColumn(destTable);
+    Database? dbClient = await db;
+    try {
+      await dbClient!.rawQuery('''
+      INSERT INTO $destTable ${Utils.genColStringForQuery(destTableCol, withBracket: true)}
+      SELECT ${Utils.genColStringForQuery(srcTableCol, withBracket: false)}
+      FROM $srcTable
+    ''');
+    } catch (e) {
+      print("Error in Cloning Table");
+      print(e);
+    }
+  }
+
+  /// 🗑️🔥 Drop the Table from the 🗄️ Database
+  Future<void> dropTable(String tableName) async {
+    Database? dbClient = await db;
+    await dbClient!.rawQuery('''
+      DROP TABLE IF EXISTS
+        $tableName
+    ''');
+  }
+
+  /// ➕ Create 'doc_table' table if not exist
+  ///
+  /// this function is likely to be called when the app is using old table
+  Future<void> creatDOCTable() async {
+    Database? dbClient = await db;
+    await dbClient!.rawQuery('''
+    CREATE TABLE IF NOT EXISTS $kDOCTableName (
+	    filename TEXT PRIMARY KEY,
+      path TEXT,
+      thumb BLOB,
+  	  docText TEXT,
+  	  tags TEXT,
+      hash TEXT,
+      folder TEXT
+    )
+    ''');
   }
 }
