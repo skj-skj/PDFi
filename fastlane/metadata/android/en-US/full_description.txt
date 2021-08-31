@@ -1,0 +1,19 @@
+PDFi is an Advance Document Organizer
+Import PDFs/XLSXs in the App once, then you can search these PDFs/XLSXs from:
+file name, PDFs's first page text / XLSXs's sheets data and Custom Tags.
+
+When you get lots of PDF files daily/weekly form different sources like:
+email, social media or simple downloading it.
+
+And you have to remeber the Name and where that PDF is saved or who sent it.
+
+PDFi solve the problem, you just have to import the PDF in the App once,
+You then search PDFs within the app from their filename, text content
+and you can also give custom tags to any PDF file.
+It saved hours of finding the pdf you need.
+
+PDFi supports:
+    * pdf
+    * xlsx
+
+PDFi is for Shop Owners, Insurance Agent, Student, Professor, or anyone with lots of PDFs 
