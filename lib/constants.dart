@@ -7,11 +7,20 @@ import 'package:flutter/material.dart';
 // 🌎 Project imports:
 import 'package:pdf_indexing/model/doc_model.dart';
 
+/// 🗺️<🔡,🔠>, Map of Image URI with their Documents Type
+Map<String, String> assetMap = {
+  'file_error': kFileErrorImage,
+  'xlsx': kXLSXFileIcon,
+};
+
 /// 🔠🗨️, already in 🗄️ db text
 String kAlreadyInDB = "already in the database";
 
-///🔠, 📱 App Title
+/// 🔠, 📱 App Title
 String kAppTitle = "PDFi";
+
+/// 🧐 Checking for Update URL
+String kCheckForUpdateURL = "https://skj-skj.github.io/check-for-update/pdfi.json";
 
 /// ➕ Create Table Query
 String kCreateTableQuery = '''
@@ -29,25 +38,20 @@ String kCreateTableQuery = '''
 /// 🔠 , 🗄️ Database is Empty Message
 String kDatabaseEmptyText = "No Files Found, Click on + to import Documents";
 
-/// 🔠 , 🎲 PDF MimeType
-String kPDFMimeType = 'application/pdf';
-
-/// 🔠 , 🎲 Spread Sheet MimeType
-List<String> kSpreadSheetTypes = [
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-  'application/vnd.ms-excel.sheet.binary.macroEnabled.12',
-  'application/vnd.ms-excel',
-  'application/vnd.ms-excel.sheet.macroEnabled.12'
-];
-
 /// 🔠, 🗄️ Database file Name
 String kDBFileName = "data.db";
+
+/// 🔠, 'doc_files' 📁 Directory name
+String kDOCFilesPath = "doc_files";
+
+/// 🔠, 🗄️ Database Table name
+String kDOCTableName = "doc_table";
 
 /// 🔠, 🌐 URI of 'file_error.png'
 String kFileErrorImage = "assets/images/file_error.png";
 
-/// 🔠, 🌐 URI of 'xlsx_icon.png'
-String kXLSXFileIcon = "assets/images/xlsx_icon.png";
+/// Uint8List Representation of 'file_error.png' image
+Uint8List kFileErrorUint8List = Uint8List.fromList([0]);
 
 /// 🔠, 🙏 Give Permission Text
 String kGivePermissionText = "Click Here to Give Permission";
@@ -67,6 +71,12 @@ String kImportingFilesMessage = "Importing Files, Please Wait";
 /// 💄 TextStyle for [Item]
 TextStyle kItemWidgetTextStyle = TextStyle(fontSize: 12);
 
+/// 🗺️ Map/json, when chec
+Map kNullAppVersionJSON = {
+        "version": "0.0.0",
+        "url": "https://github.com/skj-skj/PDFi/releases"
+      };
+
 /// Null [DOCModel], when documents file is failed to saved in app 📁 directory this is used
 DOCModel kNullDOCModel = DOCModel(
   path: 'null',
@@ -83,20 +93,19 @@ String kPathAsc = "path ASC";
 /// 🔠, [path] Desending for SQLite
 String kPathDesc = "path DESC";
 
-/// 🔠, 'doc_files' 📁 Directory name
-String kDOCFilesPath = "doc_files";
+/// 🔠 , 🎲 PDF MimeType
+String kPDFMimeType = 'application/pdf';
 
-/// 🔠, 🗄️ Database Table name
-String kDOCTableName = "doc_table";
+/// 🔠 , 🎲 Spread Sheet MimeType
+List<String> kSpreadSheetTypes = [
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'application/vnd.ms-excel.sheet.binary.macroEnabled.12',
+  'application/vnd.ms-excel',
+  'application/vnd.ms-excel.sheet.macroEnabled.12'
+];
 
-/// 🗺️, Map of Image URI with their Documents Type
-Map<String, String> assetMap = {
-  'file_error': kFileErrorImage,
-  'xlsx': kXLSXFileIcon,
-};
-
-/// Uint8List Representation of 'file_error.png' image
-Uint8List kFileErrorUint8List = Uint8List.fromList([0]);
+/// 🔠, 🌐 URI of 'xlsx_icon.png'
+String kXLSXFileIcon = "assets/images/xlsx_icon.png";
 
 /// Uint8List Representation of 'xlsx_icon.png' image
 Uint8List kXLSXUint8List = Uint8List.fromList([1]);

@@ -1,9 +1,12 @@
 // 🎯 Dart imports:
+import 'dart:convert';
 import 'dart:io';
 
 // 📦 Package imports:
 import 'package:crypto/crypto.dart';
+import 'package:http/http.dart' as http;
 import 'package:mime/mime.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -46,6 +49,41 @@ void deleteFromDir(String path) {
     print("Already Deleted");
     print(e);
   }
+}
+
+/// ⚙️🔠, Generate String of Column Names seperated by ','
+///
+/// with or without bracket
+///   - Use [withBrackert] : true/false
+String genColStringForQuery(List<String> colNames,
+    {required bool withBracket}) {
+  String colString = colNames.toString();
+  String colStringWithoutBracket = colString.substring(1, colString.length - 1);
+  if (withBracket) {
+    return '(' + colStringWithoutBracket + ')';
+  }
+  return colStringWithoutBracket;
+}
+
+/// 🗺️<🔡,🔠> Return Current App Info 
+/// 
+///   - App Version
+///   - App Package Name
+Future<Map<String, String>> getCurrAppInfo() async {
+  PackageInfo packageInfo = await PackageInfo.fromPlatform();
+  Map<String, String> result = {
+    "v": packageInfo.version,
+    "pName": packageInfo.packageName,
+  };
+  return result;
+}
+
+/// [🗺️], Return [Map] from 🗄️ Database
+///
+/// Contains ['path','thumb'] Column
+Future<List<Map>> getDOCDataFromDB() {
+  DBHelper dbH = DBHelper();
+  return dbH.queryForAllfilePaths();
 }
 
 /// 🗃️ Return List of [Filename,Extension] used when Filename already exist in App Directory
@@ -91,11 +129,6 @@ Future<List<String>> getFilePathListFromDB() async {
   return filePaths;
 }
 
-/// Return true is the file is of type Documents (pdf,xls,xlsx)
-bool isDOC(String path) {
-  return (isPDF(path) || isSpreadSheet(path));
-}
-
 /// ⏩ [🔡] Return Future [String,] containg path of files from 📁 Directory
 Future<List<String>> getFilePathListFromDir() async {
   String storagePath = await getStoragePath();
@@ -109,26 +142,16 @@ Future<List<String>> getFilePathListFromDir() async {
   return filePaths;
 }
 
-/// ⚙️🔠, Generate String of Column Names seperated by ','
-///
-/// with or without bracket
-///   - Use [withBrackert] : true/false
-String genColStringForQuery(List<String> colNames,
-    {required bool withBracket}) {
-  String colString = colNames.toString();
-  String colStringWithoutBracket = colString.substring(1, colString.length - 1);
-  if (withBracket) {
-    return '(' + colStringWithoutBracket + ')';
-  }
-  return colStringWithoutBracket;
-}
-
-/// [🗺️], Return [Map] from 🗄️ Database
-///
-/// Contains ['path','thumb'] Column
-Future<List<Map>> getDOCDataFromDB() {
-  DBHelper dbH = DBHelper();
-  return dbH.queryForAllfilePaths();
+/// 🗺️<�,�🔠>, Get Updated App Version Number
+Future<dynamic> getNewAppVersion({required Map<String, String> info}) async {
+  return await http.get(Uri.parse(kCheckForUpdateURL)).then((res) {
+    if (res.statusCode == 200) {
+      return jsonDecode(res.body)[info['pName']];
+    } else {
+      print("Can't Able to fetch App Version");
+      return kNullAppVersionJSON;
+    }
+  });
 }
 
 /// #️⃣ Return [SHA1] hash of [file]
@@ -144,9 +167,26 @@ Future<String> getStoragePath() async {
   return storageDirectory!.path;
 }
 
-/// 🔠 Returns String, containig ⚙️ Generated SQLite Where Condition
+///  Returns String, containig ⚙️ Generated SQLite Where Condition
 String getWhereConditionForSearch(String text) {
   return "docText LIKE '%$text%' OR filename LIKE '%$text%' OR tags LIKE '%$text%'";
+}
+
+/// 🌐🧐 Checking Internet Is Available or Not
+Future<bool> hasNetwork() async {
+  try {
+    final result = await InternetAddress.lookup("github.com");
+    return result.isNotEmpty && result[0].rawAddress.isNotEmpty;
+  } catch (e) {
+    print("Internet Error");
+    print(e);
+    return false;
+  }
+}
+
+/// Return true is the file is of type Documents (pdf,xls,xlsx)
+bool isDOC(String path) {
+  return (isPDF(path) || isSpreadSheet(path));
 }
 
 /// 0️⃣/1️⃣ Returns bool, of is [filePath] exist in 📁 Directory or not
@@ -172,7 +212,7 @@ bool isPDF(String path) {
   return kPDFMimeType == lookupMimeType(path).toString();
 }
 
-/// Is the File is SpreadSheet or no
+/// 🧐 Is the File is SpreadSheet or no
 bool isSpreadSheet(String path) {
   print(
       "${lookupMimeType(path).toString()} ${kSpreadSheetTypes.contains(lookupMimeType(path).toString())}");

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 /// 👁️ Show SnackBar with [text]
 void showSnackBar(
-    BuildContext context, String text, GlobalKey<ScaffoldMessengerState> key) {
-  key.currentState!.showSnackBar(SnackBar(content: Text(text)));
+    BuildContext context, String text) {
+  // key.currentState!.showSnackBar(SnackBar(content: Text(text)));
+  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
 }

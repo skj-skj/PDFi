@@ -29,12 +29,11 @@ import 'package:pdf_indexing/model/progress_model.dart';
 ///   - ☁️ Cloud Storage
 ///   - etc.
 ///
-/// Requires, BuildContext [context], [_messengerKey], Function [updateIsImporting]
+/// Requires, BuildContext [context], Function [updateIsImporting]
 ///
 /// [updateIsImporting] is a callback to update the value of [isImporting] in the main.dart
 void recieveDOC({
   required BuildContext context,
-  required GlobalKey<ScaffoldMessengerState> key,
   required Function updateIsImporting,
 }) async {
   Future.delayed(Duration(seconds: 1));
@@ -88,7 +87,7 @@ void recieveDOC({
     context.read<ProgressModel>().updateTotalValue(sharedFiles.length);
 
     // 🗨️ Showing File is Importing Message
-    showSnackBar(context, kImportingFilesMessage, key);
+    showSnackBar(context, kImportingFilesMessage);
   }
 
   for (SharedMediaFile sharedFile in sharedFiles) {
@@ -141,25 +140,25 @@ void recieveDOC({
     // 🗨️, Files Imported Successfully SnackBar
     String text = Utils.getFileOrFilesText(
         countNewFiles); // No File , 1 File, 2 Files, 3 Files etc.
-    showSnackBar(context, "$text $kImportedSuccessfully", key);
+    showSnackBar(context, "$text $kImportedSuccessfully");
   }
   if (countExistFiles > 0) {
     // 🗨️, Files already in the 🗄️ Database SnackBar
     String text = Utils.getFileOrFilesText(
         countExistFiles); // No File , 1 File, 2 Files, 3 Files etc.
-    showSnackBar(context, "$text $kAlreadyInDB", key);
+    showSnackBar(context, "$text $kAlreadyInDB");
   }
   if (countUnsupportedFiles > 0) {
     // 🗨️, Files are 🚫 Supported
     String text = Utils.getFileOrFilesText(
         countUnsupportedFiles); // No File , 1 File, 2 Files, 3 Files etc.
-    showSnackBar(context, "$text are not Supported", key);
+    showSnackBar(context, "$text are not Supported");
   }
   // if [countCorrupt] > 0
   // means some files which user selected are corrupt
   if (countCorrupt > 0) {
     // 🗨️, Files is Corrupt in the 🗄️ Database SnackBar
     String text = Utils.getFileOrFilesText(countExistFiles);
-    showSnackBar(context, "$text are Corrupt", key);
+    showSnackBar(context, "$text are Corrupt");
   }
 }
