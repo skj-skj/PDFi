@@ -1,6 +1,7 @@
 // 🎯 Dart imports:
 import 'dart:convert';
 import 'dart:io';
+import 'package:archive/archive_io.dart';
 
 // 📦 Package imports:
 import 'package:crypto/crypto.dart';
@@ -9,6 +10,7 @@ import 'package:mime/mime.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:xml/xml.dart';
 
 // 🌎 Project imports:
 import 'package:pdf_indexing/constants.dart';
@@ -157,7 +159,7 @@ Future<dynamic> getNewAppVersion({required Map<String, String> info}) async {
 /// #️⃣ Return [SHA1] hash of [file]
 Future<String> getSHA1Hash(File file) async {
   String hash = (await sha1.bind(file.openRead()).first).toString();
-  print(hash);
+  // print(hash);
   return hash;
 }
 
@@ -186,7 +188,7 @@ Future<bool> hasNetwork() async {
 
 /// Return true is the file is of type Documents (pdf,xls,xlsx)
 bool isDOC(String path) {
-  return (isPDF(path) || isSpreadSheet(path));
+  return (isPDF(path) || isSpreadSheet(path) || isWordDoc(path));
 }
 
 /// 0️⃣/1️⃣ Returns bool, of is [filePath] exist in 📁 Directory or not
@@ -201,9 +203,9 @@ Future<bool> isHashExists(File file) async {
 
   DBHelper dbHelper = DBHelper();
   String hashFromDB = await dbHelper.getSHA1HashDB(hash: hash);
-  print("hash: $hash");
-  print("hash DB: $hashFromDB");
-  print("IS Hash ${(hash == hashFromDB)}");
+  // print("hash: $hash");
+  // print("hash DB: $hashFromDB");
+  // print("IS Hash ${(hash == hashFromDB)}");
   return (hash == hashFromDB);
 }
 
@@ -212,9 +214,49 @@ bool isPDF(String path) {
   return kPDFMimeType == lookupMimeType(path).toString();
 }
 
-/// 🧐 Is the File is SpreadSheet or no
+/// 🧐 Is the File is SpreadSheet or not
 bool isSpreadSheet(String path) {
-  print(
-      "${lookupMimeType(path).toString()} ${kSpreadSheetTypes.contains(lookupMimeType(path).toString())}");
-  return kSpreadSheetTypes.contains(lookupMimeType(path).toString());
+  // print(
+  //     "${lookupMimeType(path).toString()} ${kSpreadSheetMimeTypes.contains(lookupMimeType(path).toString())}");
+  return kSpreadSheetMimeTypes.contains(lookupMimeType(path).toString());
+}
+
+/// 🧐 Is the File is Word Doc or not
+bool isWordDoc(String path) {
+  return kWordDocumentMimeTypes.contains(lookupMimeType(path).toString());
+}
+
+/// 📤 Extract Text From Docx File
+String docxParser(File file){
+
+  /// decoding docx as zip in 'docArchive'
+  Archive docArchive = ZipDecoder().decodeBytes(file.readAsBytesSync());
+  
+  /// documentFile will store "word/document.xml"
+  ArchiveFile? documentFile;
+
+  /// loop to find "word/document.xml" and saving it to documentFile
+  for (ArchiveFile file in docArchive.files){
+    if (file.name == "word/document.xml"){
+        documentFile = file;
+        break;
+    }
+  }
+  
+  /// Extracting "word/document.xml" or 'documentFile' content as string
+  String xmlContent = utf8.decode(documentFile!.content);
+  
+  /// Parsing xml
+  XmlDocument xmlDocument = XmlDocument.parse(xmlContent);
+
+  /// extracting all text in the 'xmlDocument' and all its node/element text inside the xml is seperated by space ' '.
+  /// Empty text is excluded.
+  String xmlTextContent = xmlDocument.descendants.where((node) => node is XmlText && node.text.trim().isNotEmpty).join(' ');
+  // Limiting Number of Charaters to 5000 in 'xmlTextContent'
+  if (xmlTextContent.length > 5000){
+    xmlTextContent = xmlTextContent.substring(0,5001);
+  }
+
+  /// Returing text content from doc file
+  return xmlTextContent;
 }

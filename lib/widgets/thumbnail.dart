@@ -36,7 +36,11 @@ class Thumbnail extends StatelessWidget {
 
   /// ⚙️🤔🖼️, return thumnail data
   ///
-  /// if file is corrupt or xlsx  return fileError or xlsx image data
+  /// if file is corrupt =>  return fileError image data
+  /// 
+  /// if file is xlsx => return xlsx image data
+  /// 
+  /// if file is docx => return docx image data
   ///
   /// if file is pdf and have thumbnail data saved in 🗄️ Database, [thumb] will be returned
   Uint8List genThumb() {
@@ -44,6 +48,8 @@ class Thumbnail extends StatelessWidget {
       return LoadedAssets.fileError;
     } else if (listEquals(thumb, kXLSXUint8List)) {
       return LoadedAssets.xlsx;
+    } else if (listEquals(thumb, kDOCXUint8List)){
+      return LoadedAssets.docx;
     }
     return thumb;
   }

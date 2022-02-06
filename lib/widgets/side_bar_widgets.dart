@@ -149,7 +149,7 @@ class _CheckForUpdateTileState extends State<CheckForUpdateTile> {
               : Icon(
                   Icons.check_circle_outline_sharp,
                   size: 42.0,
-                  color: Theme.of(context).accentColor,
+                  color: Theme.of(context).colorScheme.secondary,
                 ),
       title: Text(
         "Check For Update",

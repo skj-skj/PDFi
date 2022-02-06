@@ -97,15 +97,32 @@ String kPathDesc = "path DESC";
 String kPDFMimeType = 'application/pdf';
 
 /// 🔠 , 🎲 Spread Sheet MimeType
-List<String> kSpreadSheetTypes = [
+List<String> kSpreadSheetMimeTypes = [
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   'application/vnd.ms-excel.sheet.binary.macroEnabled.12',
   'application/vnd.ms-excel',
   'application/vnd.ms-excel.sheet.macroEnabled.12'
 ];
 
-/// 🔠, 🌐 URI of 'xlsx_icon.png'
-String kXLSXFileIcon = "assets/images/xlsx_icon.png";
+/// 🔠, 🌐 URI of 'xlsx_icon_256.png'
+String kXLSXFileIcon = "assets/images/xlsx_icon_256.png";
 
-/// Uint8List Representation of 'xlsx_icon.png' image
+/// Uint8List Representation of 'xlsx_icon_256.png' image
 Uint8List kXLSXUint8List = Uint8List.fromList([1]);
+
+/// 🔠 ,🎲 Word Document MimeType
+List<String> kWordDocumentMimeTypes = [
+  'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+];
+
+/// 🔠, 🌐 URI of 'docx_icon_256.png'
+String kDOCXFileIcon = "assets/images/docx_icon_256.png";
+
+/// Uint8List Representation of 'docx_icon_256.png' image
+Uint8List kDOCXUint8List = Uint8List.fromList([2]);
+
+
+/// Note for Uint8List Usage:
+/// 0: File Error
+/// 1: xlsx File
+/// 2: docx File

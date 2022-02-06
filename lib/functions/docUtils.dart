@@ -86,7 +86,7 @@ Future<DOCModel> getDOCModelOfFile(
 Future<List<File>?> pickDOCFiles() async {
   FilePickerResult? result = await FilePicker.platform.pickFiles(
     type: FileType.custom,
-    allowedExtensions: ['pdf', 'xls', 'xlsx'],
+    allowedExtensions: ['pdf', 'xls', 'xlsx', 'docx'],
     allowMultiple: true,
   );
 
@@ -108,7 +108,7 @@ Future<String> extractText(File file) async {
       PDFPage page = doc.pageAt(1);
       return (await page.text);
     } else if (Utils.isSpreadSheet(file.path)) {
-      /// 📤 Extracting Text from XLS [file]
+      /// 📤 Extracting Text from XLSX [file]
       Uint8List bytes = file.readAsBytesSync();
       SpreadsheetDecoder decoder = SpreadsheetDecoder.decodeBytes(bytes);
       List<String> sheets = decoder.tables.keys.toList();
@@ -121,7 +121,14 @@ Future<String> extractText(File file) async {
           text += "${row.join(' ')}\n";
         });
       });
+      // Limiting Number of Charaters to 5000 in 'text'
+      if (text.length > 5000){
+        text = text.substring(0,5001);
+      }
       return text;
+    } else if (Utils.isWordDoc(file.path)){
+      /// e📤 Extracting Text from DOCX [file]
+      return Utils.docxParser(file);
     }
   } catch (e) {
     print("Error while Extracting Text");
@@ -151,8 +158,13 @@ Future<Uint8List> extractThumb(File file) async {
     } else if (Utils.isSpreadSheet(file.path)) {
       /// If file is spread sheet or xlsx
       ///
-      /// Returns Uint8List representation of 'xlsx_icon.png'
+      /// Returns Uint8List representation of 'xlsx_icon_256.png'
       return kXLSXUint8List;
+    } else if (Utils.isWordDoc(file.path)){
+      /// if file is word doc or docx
+      /// 
+      /// Returns Uint8List representation of 'docx_icon_256.png'
+      return kDOCXUint8List;
     }
   } catch (e) {
     print("Error While Generating Thumbnail");
